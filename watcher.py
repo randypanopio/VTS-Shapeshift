@@ -1,42 +1,71 @@
-"""
-    Objectives:
-    Watchdog a file (performance first)
-        - shouldn't be comparing and reading the whole file, could do dirty by date changes, or use watchdog 
-
-    Trigger 
-
-"""
-
 import os
+import shutil
 import sys
 import time
 import logging
 from watchdog.observers import Observer
-from watchdog.events import LoggingEventHandler
+from watchdog.events import LoggingEventHandler, PatternMatchingEventHandler
 
-def watch():
-    dr = os.path.abspath("D:/Projects/Big Mistake/VTS-Shapeshift/test/testfiles/hiyori.2048/")
-    fp = os.path.join(dr, "main.png")
-    print("file path: "+ fp)
-    # Set the format for logging info
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+class Watcher:
+    """
+        create a backup for current session. on new sess, check if backup exists, if not create backup
+        if backup folder exists, compare if backup matches latest files, if not matching, create new backup?
+    """
+    current_backup_dir_name = ".current_watcher_backup"
+    previous_session_backup_name = ".previous_watcher_backup"
+
+    def __init__(self, model_dir):
+        # dir should be the top level directory of the model TODO maybe add validation
+        self.model_dir = os.path.abspath(model_dir)
+
+    def create_backup(self):
+        backup_dir = os.path.join(self.model_dir, self.current_backup_dir_name)
+        
+        print("create dir")
+        print("backup " + backup_dir)
+        print("current dir " + self.model_dir)
+        if not os.path.exists(backup_dir):
+            try:
+                print("trying to creating backup of model: " + self.model_dir)
+                shutil.copytree(self.model_dir, backup_dir)
+            except Exception as e:
+                print("unable to create a backup of: " + self.model_dir)
+                print(e)
+        else:
+            # TODO add condition for reverting after session. as well as if we are to update the backup at the end of session
+            print("backup exists at: " + backup_dir)
+
+    def watch(self, 
+            polling_interval = 1, 
+            on_delete = True, 
+            on_move = True, 
+            on_create = True):
+        patterns = ["*"]
+        event_handler = PatternMatchingEventHandler(patterns, None, False, True)
+        event_handler.on_modified = self.trigger_event
+        if on_delete:
+            event_handler.on_deleted = self.trigger_event
+        if on_move:
+            event_handler.on_moved = self.trigger_event
+        if on_create:
+            event_handler.on_created = self.trigger_event
+
+        # Initialize Observer
+        observer = Observer()
+        observer.schedule(event_handler, self.model_dir, recursive=True)
+    
+        # Start the observer
+        observer.start()
+        try:
+            while True:
+                # Set the thread sleep time
+                time.sleep(polling_interval)
+        except KeyboardInterrupt:
+            observer.stop()
+        observer.join()          
+
+    def trigger_event(self, event):
+        #TODO maybe rewrite and implement an event/observer implementation
+        print("watcher found a triggered event: " + event.src_path)
  
-    # Set format for displaying path
-    path = sys.argv[1] if len(sys.argv) > 1 else '.'
- 
-    # Initialize logging event handler
-    event_handler = LoggingEventHandler()
- 
-    # Initialize Observer
-    observer = Observer()
-    observer.schedule(event_handler, dr, recursive=True)
- 
-    # Start the observer
-    observer.start()
-    try:
-        while True:
-            # Set the thread sleep time
-            time.sleep(1)
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()  
