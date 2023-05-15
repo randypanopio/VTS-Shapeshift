@@ -1,52 +1,54 @@
 
 
-import os, sys, json, secrets, string
+import os, sys, json, secrets, string, asyncio
 from log import ws_logger as logging
 from vtscomms import ws as websocket
 
 # TODO convert logging
+# TODO maybe allow for catching auth instead of first auth. Allow each function to auto auth.
 class VTSRequests:
     def __init__(self):
         self.auth_token: string = ""
+        self.model_id: string = ""
         self.url = "ws://localhost:8001"        
         self.websocket = websocket.WebSocketConnection(self.url)
+        self.attempted_first_auth = False
+        self.reload_model_on_fail = False
+        self.reload_model_attempts = 0
 
-        # websocket.enableTrace(True)
-        config_filename = "VTS-Shapeshift/files/images/plugin_config.json"
-        if os.path.isfile(config_filename):
-            with open(config_filename) as file_handler:
-                raw_config = file_handler.read()
-                try:
-                    self.plugin_config = json.loads(raw_config)
-                except:
-                    self.plugin_config = self._default_plugin_config()
-        else:
-            self.plugin_config = self._default_plugin_config()
-        
-    def _default_plugin_config(self):
-        return {
+        self.plugin_config = {
                 "apiName": "VTubeStudioPublicAPI",
                 "apiVersion": "1.0",
                 "pluginName": "VTS-Shapeshift",
                 "pluginDeveloper": "Randy Panopio"}
 
-
-    def _base_payload(self, req_type: str, req_id: str = secrets.token_hex(32)):
+        # TODO update me when releasing, do not use debug config
+        config_filename = "VTS-Shapeshift/files/images/debug_config.json"
+        # config_filename = "VTS-Shapeshift/files/images/plugin_config.json"
+        if os.path.isfile(config_filename):
+            with open(config_filename) as file_handler:
+                try:
+                    json_dict = json.loads(file_handler.read())
+                    if json_dict["plugin_config"]:
+                        self.plugin_config = json_dict["plugin_config"]
+                    if json_dict["cached_auth_token"]:
+                        self.auth_token = json_dict["cached_auth_token"]
+                    if json_dict["plugin_settings"]:
+                        self.reload_model_on_fail = json_dict["plugin_settings"]["reload_model_on_fail"]
+                except Exception as e:
+                    print(e)
+    
+    def _standard_payload(self, req_type: str, req_id: str = secrets.token_hex(32)):
         request_payload = {
             "apiName": self.plugin_config["apiName"],
             "apiVersion": self.plugin_config["apiVersion"],
             "requestID": req_id,
             "messageType": req_type,
-            "data": {}
+            "data": {
+                "pluginName": self.plugin_config["pluginName"],
+                "pluginDeveloper": self.plugin_config["pluginDeveloper"]
+            }
         }
-        return request_payload
-    
-    def _standard_payload(self, req_type: str, req_id: str = secrets.token_hex(32)):
-        request_payload = self._base_payload(req_type, req_id)
-        request_payload["data"].update({
-            "pluginName": self.plugin_config["pluginName"],
-            "pluginDeveloper": self.plugin_config["pluginDeveloper"]
-        })
         return request_payload
 
     async def check_status(self):
@@ -55,8 +57,8 @@ class VTSRequests:
         print("$$ {} request message:\n{}".format(type, msg))
         await self.websocket.send(msg)
         response = await self.websocket.receive() 
-        print("$$ {} response:\n{}".format(type, response))        
-
+        print("$$ {} response:\n{}".format(type, response))
+        return json.loads(response)  
 
     async def _get_auth_token(self):
         type = "AuthenticationTokenRequest"
@@ -66,6 +68,8 @@ class VTSRequests:
         response = await self.websocket.receive() 
         print("$$ {} response:\n{}".format(type, response))
 
+        if not result:
+            return
         result = json.loads(response)
         if "data" in result:
             data = result["data"]
@@ -76,12 +80,14 @@ class VTSRequests:
             else:
                 print("Something went terribly wrong during authentication")
 
-    # TODO check if valid auth and existing authtoken before generating a new token
     async def authenticate(self):
+        status = await self.check_status()
+        if "data" in status:
+            if status["data"]["currentSessionAuthenticated"] is True:
+                print("Current session is already authenticated")
+                return
         if not self.auth_token:
             await self._get_auth_token()
-        else:
-            return
         type = "AuthenticationRequest"
         dict_msg = self._standard_payload(type)
         dict_msg["data"].update({"authenticationToken": self.auth_token })
@@ -91,6 +97,8 @@ class VTSRequests:
         response = await self.websocket.receive() 
         print("$$ {} response:\n{}".format(type, response))
 
+        if not result:
+            return
         result = json.loads(response)
         if "data" in result:
             data = result["data"]
@@ -99,18 +107,51 @@ class VTSRequests:
             else:
                 logging.info("Authenticated session")
 
-    def get_current_model(self):
-        msg = self._standard_payload("CurrentModelRequest")
-        print("$$ CurrentModelRequest request message: \n" + json.dumps(msg))
-        ws = self.get_ws()
-        ws.send(json.dumps(msg))
-        result = ws.recv()
-        print("$$ CurrentModelRequest respone: \n" + result)
-        response = json.loads(result)
-        if "data" in response:
-            data = response["data"]
-        else:
-            print("No data found during CurrentModelRequest")
-        ws.close()
+    async def get_current_model_id(self):
+        type = "CurrentModelRequest"
+        msg = json.dumps(self._standard_payload(type))
+        print("$$ {} request message:\n{}".format(type, msg))
+        await self.websocket.send(msg)
+        response = await self.websocket.receive() 
+        print("$$ {} response:\n{}".format(type, response))
 
-##  SHIIITT THIS WONT WORK, I NEED A KEEPALIVE WEBSOCKET CONNECTIO NRAAAGHH
+        if not result:
+            return
+        result = json.loads(response)
+        if "data" in result:
+            data = result["data"]
+            self.model_id = data["modelID"]
+        return self.model_id
+    
+    async def reload_current_model(self):
+        if not self.model_id:
+            await self.get_current_model_id()
+
+        type = "ModelLoadRequest"
+        dict_msg = self._standard_payload(type)
+        dict_msg["data"].update({"modelID": self.model_id })
+        msg = json.dumps(dict_msg)
+        print("$$ {} request message:\n{}".format(type, msg))
+        await self.websocket.send(msg)
+        response = await self.websocket.receive() 
+        print("$$ {} response:\n{}".format(type, response))
+
+        if not result:
+            return
+        result = json.loads(response)
+        if "data" in result:
+            data_dict = result["data"]
+            if "errorID" in data_dict:
+                print("Error ID: {}, message: {}".format(data_dict["errorID"], data_dict["message"]))
+                if data_dict["errorID"] == 153 and self.reload_model_on_fail:
+                    print("watta")
+                    if self.reload_model_attempts >= 4:
+                        print("Maxed out auto reload model attempts. Something went wrong")
+                    else:                            
+                        # hit 2 second cooldown, wait buffer time before attempting again.
+                        await asyncio.sleep(2.5)
+                        self.reload_model_attempts += 1
+                        await self.reload_current_model()
+            else:
+                self.reload_model_attempts = 0
+

@@ -2,22 +2,15 @@
 # Using Pyside to run our magic
 import asyncio
 
-import watcher
-from vtscomms import requests
-# w = watcher.Watcher()
-# w.create_backup()
-# w.watch("D:/Projects/Big Mistake/VTS-Shapeshift/test/testfiles/hiyori.2048")
-
-cms = requests.VTSRequests()
-# asyncio.run(cms.test())
-
-
-async def testrun():
-    from vtscomms import comms
-    talk = comms.VTSRequests()
-    await(talk.check_status())
-    await(talk.authenticate())
-    await(talk.check_status())    
+from vtscomms import vts_requests
+from watcher import watcher
 
 if __name__ == "__main__":
-    asyncio.run(testrun())
+    # TODO 
+    print("== TODO update me==")
+    vts_client = vts_requests.VTSRequests()
+    model_dir = ("D:/Projects/Big Mistake/VTS-Shapeshift/test/testfiles/hiyori.2048")
+    observer = watcher.Watcher(model_dir)
+
+    #TODO rebuild async logic to call individual async methods inside vts_client, gonna be a doozy when implemented on PySide D:
+

@@ -1,6 +1,12 @@
 {
-    "apiName": "VTubeStudioPublicAPI",
-    "apiVersion": "1.0",
-    "pluginName": "VTS-Shapeshift",
-    "pluginDeveloper": "Randy"
-  }
+    "plugin_config": {
+        "apiName": "VTubeStudioPublicAPI",
+        "apiVersion": "1.0",
+        "pluginName": "VTS-Shapeshift",
+        "pluginDeveloper": "Randy Panopio"
+    },
+    "cached_auth_token": "",
+    "plugin_settings": {
+        "reload_model_on_fail": true
+    }
+}

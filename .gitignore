@@ -5,3 +5,5 @@ testpy/
 *__pycache__/
 *.pyc
 *.log
+
+files/images/debug_config.json
