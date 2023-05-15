@@ -10,4 +10,14 @@ from vtscomms import requests
 
 cms = requests.VTSRequests()
 # asyncio.run(cms.test())
-cms.test()
+
+
+async def testrun():
+    from vtscomms import comms
+    talk = comms.VTSRequests()
+    await(talk.check_status())
+    await(talk.authenticate())
+    await(talk.check_status())    
+
+if __name__ == "__main__":
+    asyncio.run(testrun())
