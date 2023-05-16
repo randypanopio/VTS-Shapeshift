@@ -1,9 +1,6 @@
-import os
-import shutil
-import sys
-import time
-import logging
+import os, shutil, sys, time
 from watchdog.observers import Observer
+from log import ws_logger as logging
 from watchdog.events import LoggingEventHandler, PatternMatchingEventHandler
 
 
@@ -15,22 +12,20 @@ class Watcher:
     current_backup_dir_name = ".current_watcher_backup"
     previous_session_backup_name = ".previous_watcher_backup"
 
-    def __init__(self, model_dir):
-        # dir should be the top level directory of the model TODO maybe add validation
-        self.model_dir = os.path.abspath(model_dir)
+    def __init__(self, dir, event_handler = None, check_intialize_hander = None):
+        self.dir = os.path.abspath(dir)
+        self.event_handler = event_handler
+        self.check_intialize_hander = check_intialize_hander
 
     def create_backup(self):
-        backup_dir = os.path.join(self.model_dir, self.current_backup_dir_name)
-        
-        print("create dir")
-        print("backup " + backup_dir)
-        print("current dir " + self.model_dir)
+        backup_dir = os.path.join(self.dir, self.current_backup_dir_name)
+
         if not os.path.exists(backup_dir):
             try:
-                print("trying to creating backup of model: " + self.model_dir)
-                shutil.copytree(self.model_dir, backup_dir)
+                print("trying to creating backup of directory: " + self.dir)
+                shutil.copytree(self.dir, backup_dir)
             except Exception as e:
-                print("unable to create a backup of: " + self.model_dir)
+                print("unable to create a backup of: " + self.dir)
                 print(e)
         else:
             # TODO add condition for reverting after session. as well as if we are to update the backup at the end of session
@@ -42,6 +37,7 @@ class Watcher:
             on_move = True, 
             on_create = True):
         patterns = ["*"]
+        print("BEGIN WOTCH")
         event_handler = PatternMatchingEventHandler(patterns, None, False, True)
         event_handler.on_modified = self.trigger_event
         if on_delete:
@@ -53,7 +49,7 @@ class Watcher:
 
         # Initialize Observer
         observer = Observer()
-        observer.schedule(event_handler, self.model_dir, recursive=True)
+        observer.schedule(event_handler, self.dir, recursive=True)
     
         # Start the observer
         observer.start()
@@ -63,9 +59,15 @@ class Watcher:
                 time.sleep(polling_interval)
         except KeyboardInterrupt:
             observer.stop()
-        observer.join()          
+        observer.join()
+        self.initialized_watch()
+
+    def initialized_watch(self):
+        print("Watcher initalized observer on dir: " + self.dir)
+        if self.check_intialize_hander:
+            self.check_intialize_hander()
 
     def trigger_event(self, event):
-        #TODO maybe rewrite and implement an event/observer implementation
-        print("watcher found a triggered event: " + event.src_path)
+        if self.event_handler:
+            self.event_handler(event)
  

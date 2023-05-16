@@ -85,7 +85,7 @@ class VTSRequests:
         if "data" in status:
             if status["data"]["currentSessionAuthenticated"] is True:
                 print("Current session is already authenticated")
-                return
+                return True
         if not self.auth_token:
             await self._get_auth_token()
         type = "AuthenticationRequest"
@@ -97,8 +97,8 @@ class VTSRequests:
         response = await self.websocket.receive() 
         print("$$ {} response:\n{}".format(type, response))
 
-        if not result:
-            return
+        if not response:
+            return False
         result = json.loads(response)
         if "data" in result:
             data = result["data"]
@@ -106,6 +106,8 @@ class VTSRequests:
                 logging.warning("Failed to authenticate")
             else:
                 logging.info("Authenticated session")
+                return True
+        return False
 
     async def get_current_model_id(self):
         type = "CurrentModelRequest"
