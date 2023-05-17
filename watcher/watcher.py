@@ -12,10 +12,11 @@ class Watcher:
     current_backup_dir_name = ".current_watcher_backup"
     previous_session_backup_name = ".previous_watcher_backup"
 
-    def __init__(self, dir, event_handler = None, check_intialize_hander = None):
+    def __init__(self, dir, event_handler = None, check_intialize_handler = None):
         self.dir = os.path.abspath(dir)
         self.event_handler = event_handler
-        self.check_intialize_hander = check_intialize_hander
+        self.check_intialize_handler = check_intialize_handler
+        self.observer = None
 
     def create_backup(self):
         backup_dir = os.path.join(self.dir, self.current_backup_dir_name)
@@ -49,25 +50,31 @@ class Watcher:
 
         # Initialize Observer
         observer = Observer()
-        observer.schedule(event_handler, self.dir, recursive=True)
+        self.observer - observer
+        self.observer.schedule(event_handler, self.dir, recursive=True)
     
         # Start the observer
-        observer.start()
+        self.observer.start()
         try:
             while True:
                 # Set the thread sleep time
                 time.sleep(polling_interval)
         except KeyboardInterrupt:
-            observer.stop()
-        observer.join()
+            self.observer.stop()
+        self.observer.join()
         self.initialized_watch()
 
     def initialized_watch(self):
         print("Watcher initalized observer on dir: " + self.dir)
-        if self.check_intialize_hander:
-            self.check_intialize_hander()
+        if self.check_intialize_handler:
+            self.check_intialize_handler()
 
     def trigger_event(self, event):
         if self.event_handler:
             self.event_handler(event)
+
+    # TODO build me, OR implement initalizing new observer if it makes sense that way.
+    # Likely updating observer's dir probably faster performance wise, gotta test 
+    def update_directory(self, directory):
+        pass
  
