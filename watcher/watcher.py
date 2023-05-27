@@ -1,6 +1,6 @@
 import os, shutil, sys, time
 from watchdog.observers import Observer
-from log import ws_logger as logging
+from utils import log as logging
 from watchdog.events import LoggingEventHandler, PatternMatchingEventHandler
 
 

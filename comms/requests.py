@@ -1,5 +1,5 @@
 import os, sys, json, secrets, string, asyncio
-from log import ws_logger as logging
+from utils import log as logging
 from comms import ws as websocket
 
 # TODO convert logging
@@ -182,7 +182,6 @@ class VT_Requests:
                 if "errorID" in data_dict:
                     print("Error ID: {}, message: {}".format(data_dict["errorID"], data_dict["message"]))
                     if data_dict["errorID"] == 153 and self.reload_model_on_fail:
-                        print("watta")
                         if self.reload_model_attempts >= 4:
                             print("Maxed out auto reload model attempts. Something went wrong")
                         else:                            

@@ -1,4 +1,4 @@
-from log import ws_logger as logging
+from utils import log as logging
 import asyncio
 import websockets
 

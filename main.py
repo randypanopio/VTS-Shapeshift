@@ -4,12 +4,24 @@ import asyncio, json
 
 from comms import requests
 from watcher import watcher
+from utils import log as logging
 
 def test(event):
     print("i am a watcher in main, call the reload function")
     print("event: " + str(event))
 
 def handle_new_models():
+    pass
+
+def process_watcher_update():
+    """
+    my job is to detect new changes from watcher. 
+    - validate requests and send to ws requests
+        - check if vts connection is still valid, reconnect plugin if thats not the case
+        - update ui for current plugin status (in cases where reload model isn't running despite the request)
+    - cases of invalid might be verifying if watcher is looking at the correct dir (eg vts changed models, were not gonna set up events to listen for model changes since that really isn't the scope of this tool)
+        - handle based on settings (update watcher or deactivate watcher)
+    """
     pass
 
 if __name__ == "__main__":
