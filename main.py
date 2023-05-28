@@ -1,14 +1,19 @@
 
 # Using Pyside to run our magic
-import asyncio, json
+import sys, asyncio, json
+from PySide6 import QtWidgets
 
 from comms import requests
 from watcher import watcher
-from utils import log as logging
+from m_utils import log as logging
+from app_interface.window import Window
 
 def test(event):
     print("i am a watcher in main, call the reload function")
     print("event: " + str(event))
+
+def randprint():
+    print("rand print")
 
 def handle_new_models():
     pass
@@ -22,11 +27,20 @@ def process_watcher_update():
     - cases of invalid might be verifying if watcher is looking at the correct dir (eg vts changed models, were not gonna set up events to listen for model changes since that really isn't the scope of this tool)
         - handle based on settings (update watcher or deactivate watcher)
     """
+    # TODO use new_model_event to seamlessly update watcher look directory
     pass
 
 if __name__ == "__main__":
     # TODO 
     print("== TODO update me==")
+
+    app = QtWidgets.QApplication(sys.argv)
+    window = Window()
+    window.show()
+
+    window.connection_button.clicked.connect(randprint)
+    window.set_watcher_button_interactive(False)
+    app.exec()
     # vts_client = vts_requests.VT_Requests(True, new_model_handler=handle_new_models)
     # model_data = asyncio.run(vts_client.get_current_model_data())
     # print("JISDBGKJ\n"+json.dumps(model_data))
