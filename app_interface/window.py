@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtGui import QIcon
 import sys
 # from m_utils import log as logging
 from app_interface.widget import Ui_Form
@@ -8,6 +9,7 @@ class Window(QWidget, Ui_Form):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle("VTS-Shapeshift Plugin Application")
+        self.setWindowIcon(QIcon("VTS-Shapeshift/files/images/icon.png"))
 
 
 
