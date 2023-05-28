@@ -1,6 +1,6 @@
 import os, shutil, sys, time
 from watchdog.observers import Observer
-from utils import log as logging
+from m_utils import log as logging
 from watchdog.events import LoggingEventHandler, PatternMatchingEventHandler
 
 
@@ -59,8 +59,8 @@ class Watcher:
             while True:
                 # Set the thread sleep time
                 time.sleep(polling_interval)
-        except KeyboardInterrupt:
-            self.observer.stop()
+        except Exception as e:
+            print(e)
         self.observer.join()
         self.initialized_watch()
 
@@ -72,6 +72,9 @@ class Watcher:
     def trigger_event(self, event):
         if self.event_handler:
             self.event_handler(event)
+
+    def disable_watcher(self):
+        self.observer.stop()
 
     # TODO build me, OR implement initalizing new observer if it makes sense that way.
     # Likely updating observer's dir probably faster performance wise, gotta test 

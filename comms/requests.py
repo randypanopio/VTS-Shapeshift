@@ -1,18 +1,18 @@
 import os, sys, json, secrets, string, asyncio
-from utils import log as logging
+from m_utils import log as logging
 from comms import ws as websocket
 
 # TODO convert logging
 # TODO maybe allow for catching auth instead of first auth. Allow each function to auto auth.
 class VT_Requests:
-    def __init__(self, intialize = True, new_model_handler = None):
+    def __init__(self, intialize = True, new_model_handler = None, url = "ws://localhost:8001"):
         self.model_id: string = ""
         self.model_data = None
         self.update_on_new_model = True
         self.new_model_handler = new_model_handler
 
         self.auth_token: string = ""
-        self.url = "ws://localhost:8001"        
+        self.url = url
         self.websocket = websocket.WebSocketConnection(self.url)
         self.attempted_first_auth = False
         self.reload_model_on_fail = False
@@ -59,7 +59,7 @@ class VT_Requests:
             return False
         result = json.loads(response)
         if "data" in result:
-            self.model_id == result["data"]["modelID"]
+            self.model_id == result["data"]["modelID"] # model has not changed
             return True
         else:
             if self.update_on_new_model:
@@ -116,7 +116,6 @@ class VT_Requests:
         status = await self.check_status()
         if "data" in status:
             if status["data"]["currentSessionAuthenticated"] is True:
-                print("Current session is already authenticated")
                 return True
         if not self.auth_token:
             await self._get_auth_token()
@@ -159,11 +158,15 @@ class VT_Requests:
 
     # region Live functions - AKA functions used post init
     async def reload_current_model(self):
+        # check vts connection status
+
+        # check if data has not yet been loaded
         if not self.model_id:
             self.request_model_data()
 
+        # check if model was updated
         if not self.validate_model():
-            pass
+            pass # model has been updated, no need to use watcher reload since we need to update model data first 
         else:
             type = "ModelLoadRequest"
             dict_msg = self._standard_payload(type)
