@@ -7,6 +7,7 @@
     },
     "cached_auth_token": "439982ffd3095c57442f3a4d808ade2603669574c90f936c96efc8729ab228d7",
     "plugin_settings": {
-        "reload_model_on_fail": true
+        "reload_model_on_fail": true,
+        "update_data_on_new_model": true
     }
 }

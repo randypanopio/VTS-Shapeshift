@@ -1,5 +1,5 @@
 import sys, asyncio, os, json
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets
 
 from comms import requests
 from watcher import watcher
@@ -8,6 +8,16 @@ from app_interface.window import Window
 
 class ShapeShift:
     def __init__(self):
+        # Plugin Config, used to prepop data
+        config_filename = "VTS-Shapeshift/files/images/debug_config.json"
+        if os.path.isfile(config_filename):
+            with open(config_filename) as file_handler:
+                try:
+                    self.config_json_dict = json.loads(file_handler.read())
+                except Exception as e:
+                    print(e)
+        # Maybe TODO, split out config and only pass necessary data rather than the whole thing, probably not tho
+
         # VTS Connection
         self.vts_client = requests.VT_Requests(new_model_handler=self.handle_new_models)
 

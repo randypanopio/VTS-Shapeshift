@@ -7,6 +7,7 @@
     },
     "cached_auth_token": "",
     "plugin_settings": {
-        "reload_model_on_fail": true
+        "reload_model_on_fail": true,
+        "update_data_on_new_model": true
     }
 }

@@ -1,45 +1,48 @@
-import os, sys, json, secrets, string, asyncio
+import json, secrets, string, asyncio
 from m_utils import log as logging
 from comms import ws as websocket
 
 # TODO convert logging
-# TODO maybe allow for catching auth instead of first auth. Allow each function to auto auth.
 class VT_Requests:
-    def __init__(self, new_model_handler = None, url = "ws://localhost:8001"):
+    def __init__(self, config_data, new_model_handler = None):
         self.model_id: string = ""
         self.model_data = None
-        self.update_on_new_model = True
         self.new_model_handler = new_model_handler
-
-        self.auth_token: string = ""
-        self.url = url
-        self.websocket = websocket.WebSocketConnection(self.url)
-        self.connected = False
-        self.attempted_first_auth = False
-        self.reload_model_on_fail = False
-        self.reload_model_attempts = 0
-
-        self.plugin_config = {
+        
+        # Prefil from config
+        if config_data["plugin_config"]:
+            self.plugin_config = config_data["plugin_config"]
+        else:
+            self.plugin_config = {
                 "apiName": "VTubeStudioPublicAPI",
                 "apiVersion": "1.0",
                 "pluginName": "VTS-Shapeshift",
                 "pluginDeveloper": "Randy Panopio"}
 
-        # TODO update me when releasing, do not use debug config
-        # config_filename = "VTS-Shapeshift/files/images/debug_config.json"
-        config_filename = "VTS-Shapeshift/files/images/plugin_config.json"
-        if os.path.isfile(config_filename):
-            with open(config_filename) as file_handler:
-                try:
-                    json_dict = json.loads(file_handler.read())
-                    if json_dict["plugin_config"]:
-                        self.plugin_config = json_dict["plugin_config"]
-                    if json_dict["cached_auth_token"]:
-                        self.auth_token = json_dict["cached_auth_token"]
-                    if json_dict["plugin_settings"]:
-                        self.reload_model_on_fail = json_dict["plugin_settings"]["reload_model_on_fail"]
-                except Exception as e:
-                    print(e)
+        if config_data["cached_auth_token"]:
+            self.auth_token = config_data["cached_auth_token"]
+        else:
+            self.auth_token: string = ""
+
+        if config_data["plugin_settings"]["reload_model_on_fail"]:
+            self.reload_model_on_fail = config_data["plugin_settings"]["reload_model_on_fail"]
+        else:
+            self.reload_model_on_fail = False
+
+        if config_data["plugin_settings"]["update_data_on_new_model"]:
+            self.update_data_on_new_model = config_data["plugin_settings"]["update_data_on_new_model"]
+        else:
+            self.update_data_on_new_model = False
+
+        if config_data["plugin_settings"]["websocket_url"]:
+            self.url = config_data["plugin_settings"]["websocket_url"]
+        else:
+            self.url: string = "ws://localhost:8001"
+            
+        self.websocket = websocket.WebSocketConnection(self.url)
+        self.connected = False
+        self.attempted_first_auth = False
+        self.reload_model_attempts = 0        
 
     # Use me for functionality that modifies model/scene. Rather than creating listeners for model updates,
     # this is a clean way of updating following requests based on changes, or blocking invalid requests.
@@ -59,7 +62,7 @@ class VT_Requests:
             self.model_id == result["data"]["modelID"] # model has not changed
             return True
         else:
-            if self.update_on_new_model:
+            if self.update_data_on_new_model:
                 await self.request_model_data()
                 self.new_model_event()
                 return True
@@ -163,6 +166,8 @@ class VT_Requests:
     # region Live functions - AKA functions used post init
     async def reload_current_model(self):
         # check vts connection status
+        if not self.connected:
+            await self.authenticate()
 
         # check if data has not yet been loaded
         if not self.model_id:
