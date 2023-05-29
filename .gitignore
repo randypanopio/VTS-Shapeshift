@@ -6,4 +6,4 @@ testpy/
 *.pyc
 *.log
 
-files/images/debug_config.json
+files/debug_config.json
