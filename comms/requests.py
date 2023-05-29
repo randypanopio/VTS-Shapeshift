@@ -34,8 +34,10 @@ class VT_Requests:
         else:
             self.update_data_on_new_model = False
 
-        if config_data["plugin_settings"]["websocket_url"]:
-            self.url = config_data["plugin_settings"]["websocket_url"]
+        base = config_data["plugin_settings"]["ws_base_url"]
+        port = config_data["plugin_settings"]["ws_port"]
+        if base and port:
+            self.url = base + ":" if not base.endswith(":") else "" + port
         else:
             self.url: string = "ws://localhost:8001"
             

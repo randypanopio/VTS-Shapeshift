@@ -7,11 +7,10 @@ from m_utils import log as logging
 from app_interface.window import Window
 
 class ShapeShift:
-    def __init__(self):
+    def __init__(self, config_fp):
         # Plugin Config, used to prepop data
-        config_filename = "VTS-Shapeshift/files/images/debug_config.json"
-        if os.path.isfile(config_filename):
-            with open(config_filename) as file_handler:
+        if os.path.isfile(config_fp):
+            with open(config_fp) as file_handler:
                 try:
                     self.config_json_dict = json.loads(file_handler.read())
                 except Exception as e:
@@ -19,21 +18,36 @@ class ShapeShift:
         # Maybe TODO, split out config and only pass necessary data rather than the whole thing, probably not tho
 
         # VTS Connection
-        self.vts_client = requests.VT_Requests(new_model_handler=self.handle_new_models)
+        self.vts_client = requests.VT_Requests(config_data=self.config_json_dict, new_model_handler=self.handle_new_models)
 
         # Watcher
-        cached_dir = "D:/SteamLibrary/steamapps/common/VTube Studio/VTube Studio_Data/StreamingAssets/Live2DModels/hiyori_test" #TODO
-        self.observer = watcher.Watcher(dir=cached_dir, event_handler=self.process_watcher_update)
+        self.observer = watcher.Watcher(config_data=self.config_json_dict, event_handler=self.process_watcher_update)
 
         # GUI
         self.app = QtWidgets.QApplication(sys.argv)        
         self.window = Window()
+
+        # vts requests gui
         self.window.connection_button.clicked.connect(self.connect_button)
         self.window.plugin_status_label.setText("Connected" if self.vts_client.connected else "Offline")
         self.window.plugin_status_label.setStyleSheet("color: green;" if self.vts_client.connected else "color: red;")
+        self.window.url_input.setText(self.config_json_dict["plugin_settings"]["ws_base_url"])
+        self.window.port_input.setText(self.config_json_dict["plugin_settings"]["ws_port"])        
+
+        # watcher gui
         self.window.watcher_button.clicked.connect(self.watcher_button)
         self.window.watcher_status_label.setText("Watching..." if self.observer.enabled else "Disabled")
         self.window.watcher_status_label.setStyleSheet("color: green;" if self.observer.enabled else "color: red;")
+        self.window.directory_input.setEnabled(False if self.observer.enabled else True)
+        self.window.directory_input.setText(self.config_json_dict["plugin_settings"]["model_directory"])
+        self.window.browse_button.clicked.connect(self.browse_button)
+
+        # remaining settings gui
+        self.window.save_pref_button.clicked.connect(self.save_prefs_button)
+        self.window.model_reload_checkbox.setChecked(self.config_json_dict["plugin_settings"]["reload_model_on_fail"])
+        self.window.update_data_checkbox.setChecked(self.config_json_dict["plugin_settings"]["update_data_on_new_model"])
+        self.window.backup_checkbox.setChecked(self.config_json_dict["plugin_settings"]["backup_folders"])
+
 
 
     # TODO grab cahced url from plugin config, also it should be reflected from settings
@@ -57,6 +71,13 @@ class ShapeShift:
         self.window.watcher_button.setText("Disable" if status else "Enable") # note, status was flipped from status above
         self.window.watcher_status_label.setText("Disabled" if status else "Watching...")
         self.window.watcher_status_label.setStyleSheet("color: red;" if status else "color: green;")
+        self.window.directory_input.setEnabled(False if self.observer.enabled else True)
+
+    def browse_button(self):
+        pass
+
+    def save_prefs_button(self):
+        pass
 
     def process_watcher_update(self):
         """
@@ -80,7 +101,7 @@ class ShapeShift:
 
 #TODO prefill from plugin config
 if __name__ == "__main__":
-    s = ShapeShift()
+    s = ShapeShift("VTS-Shapeshift/files/debug_config.json")
     s.open_window()
 
 
