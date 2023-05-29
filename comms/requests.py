@@ -5,7 +5,7 @@ from comms import ws as websocket
 # TODO convert logging
 # TODO maybe allow for catching auth instead of first auth. Allow each function to auto auth.
 class VT_Requests:
-    def __init__(self, intialize = True, new_model_handler = None, url = "ws://localhost:8001"):
+    def __init__(self, new_model_handler = None, url = "ws://localhost:8001"):
         self.model_id: string = ""
         self.model_data = None
         self.update_on_new_model = True
@@ -14,6 +14,7 @@ class VT_Requests:
         self.auth_token: string = ""
         self.url = url
         self.websocket = websocket.WebSocketConnection(self.url)
+        self.connected = False
         self.attempted_first_auth = False
         self.reload_model_on_fail = False
         self.reload_model_attempts = 0
@@ -39,10 +40,6 @@ class VT_Requests:
                         self.reload_model_on_fail = json_dict["plugin_settings"]["reload_model_on_fail"]
                 except Exception as e:
                     print(e)
-        
-        if intialize: # useful for new session
-            asyncio.run(self.authenticate())
-            asyncio.run(self.request_model_data())
 
     # Use me for functionality that modifies model/scene. Rather than creating listeners for model updates,
     # this is a clean way of updating following requests based on changes, or blocking invalid requests.
@@ -100,7 +97,7 @@ class VT_Requests:
         response = await self.websocket.receive() 
         print("$$ {} response:\n{}".format(type, response))
 
-        if not result:
+        if not response:
             return
         result = json.loads(response)
         if "data" in result:
@@ -116,7 +113,10 @@ class VT_Requests:
         status = await self.check_status()
         if "data" in status:
             if status["data"]["currentSessionAuthenticated"] is True:
+                self.connected = True
                 return True
+            else:
+                self.connected = False
         if not self.auth_token:
             await self._get_auth_token()
         type = "AuthenticationRequest"
@@ -129,15 +129,19 @@ class VT_Requests:
         print("$$ {} response:\n{}".format(type, response))
 
         if not response:
+            self.connected = False
             return False
         result = json.loads(response)
         if "data" in result:
             data = result["data"]
             if data["authenticated"] is False:
-                logging.warning("Failed to authenticate")
+                print("Failed to authenticate")
+                self.connected = False
             else:
-                logging.info("Authenticated session")
+                print("Authenticated session")
+                self.connected = True
                 return True
+        self.connected = False
         return False
 
     async def request_model_data(self):

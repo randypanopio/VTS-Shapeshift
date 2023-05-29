@@ -1,7 +1,5 @@
-
-# Using Pyside to run our magic
 import sys, asyncio, os, json
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtCore
 
 from comms import requests
 from watcher import watcher
@@ -11,20 +9,44 @@ from app_interface.window import Window
 class ShapeShift:
     def __init__(self):
         # VTS Connection
-        self.vts_client = None #requests.VT_Requests(True, new_model_handler=handle_new_models)
+        self.vts_client = requests.VT_Requests(new_model_handler=self.handle_new_models)
+
+        # Watcher
+        cached_dir = "D:/SteamLibrary/steamapps/common/VTube Studio/VTube Studio_Data/StreamingAssets/Live2DModels/hiyori_test" #TODO
+        self.observer = watcher.Watcher(dir=cached_dir, event_handler=self.process_watcher_update)
 
         # GUI
         self.app = QtWidgets.QApplication(sys.argv)        
         self.window = Window()
         self.window.connection_button.clicked.connect(self.connect_button)
-        pass
+        self.window.plugin_status_label.setText("Connected" if self.vts_client.connected else "Offline")
+        self.window.plugin_status_label.setStyleSheet("color: green;" if self.vts_client.connected else "color: red;")
+        self.window.watcher_button.clicked.connect(self.watcher_button)
+        self.window.watcher_status_label.setText("Watching..." if self.observer.enabled else "Disabled")
+        self.window.watcher_status_label.setStyleSheet("color: green;" if self.observer.enabled else "color: red;")
+
 
     # TODO grab cahced url from plugin config, also it should be reflected from settings
+    # TODO ui still freezing despite running in a separate thread :(
     def connect_button(self):
-        if self.vts_client is None:
-            self.vts_client = requests.VT_Requests(True, new_model_handler=handle_new_models)
+        asyncio.run(self.vts_client.authenticate())
+        self.window.plugin_status_label.setText("Connected" if self.vts_client.connected else "Offline")
+        self.window.plugin_status_label.setStyleSheet("color: green;" if self.vts_client.connected else "color: red;")
+            
+    def watcher_button(self):
+        """
+        on start - do nothing
+        check current status and process what to do next (eg toggle on or off)
+        """
+        status = self.observer.enabled
+        if status:
+            self.observer.disable_watcher()
         else:
-            asyncio.run(self.vts_client.authenticate())
+            self.observer.enable_watcher() 
+        # Sync UI. True value should only come from observer
+        self.window.watcher_button.setText("Disable" if status else "Enable") # note, status was flipped from status above
+        self.window.watcher_status_label.setText("Disabled" if status else "Watching...")
+        self.window.watcher_status_label.setStyleSheet("color: red;" if status else "color: green;")
 
     def process_watcher_update(self):
         """
@@ -42,24 +64,14 @@ class ShapeShift:
         self.window.show()
         self.app.exec()    
 
+    def handle_new_models(self):
+        pass
 
-
-def test(event):
-    print("i am a watcher in main, call the reload function")
-    print("event: " + str(event))
-
-def randprint():
-    print("rand print")
-
-# TODO
-def handle_new_models():
-    pass
-
-
-    pass
 
 #TODO prefill from plugin config
-
+if __name__ == "__main__":
+    s = ShapeShift()
+    s.open_window()
 
 
 
@@ -78,9 +90,6 @@ def handle_new_models():
 
 
 
-if __name__ == "__main__":
-    s = ShapeShift()
-    s.open_window()
 
     
 
@@ -94,12 +103,3 @@ if __name__ == "__main__":
 
 
     #TODO rebuild async logic to call individual async methods inside vts_client, gonna be a doozy when implemented on PySide D:
-
-    pass
-
-"""
-on launch:
- - check if there is a previous session. update gui for fast enable
-
-
-"""

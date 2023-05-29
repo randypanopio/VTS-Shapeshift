@@ -426,7 +426,7 @@ height: 30px;</string>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Create Backup</string>
+            <string>Create Backup Folder</string>
            </property>
            <property name="checked">
             <bool>true</bool>

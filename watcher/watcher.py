@@ -12,11 +12,12 @@ class Watcher:
     current_backup_dir_name = ".current_watcher_backup"
     previous_session_backup_name = ".previous_watcher_backup"
 
-    def __init__(self, dir, event_handler = None, check_intialize_handler = None):
+    def __init__(self, dir, event_handler = None):
         self.dir = os.path.abspath(dir)
         self.event_handler = event_handler
-        self.check_intialize_handler = check_intialize_handler
-        self.observer = None
+        self.observer = Observer()
+        self.enabled = False
+        self.initialized = False
 
     def create_backup(self):
         backup_dir = os.path.join(self.dir, self.current_backup_dir_name)
@@ -32,13 +33,13 @@ class Watcher:
             # TODO add condition for reverting after session. as well as if we are to update the backup at the end of session
             print("backup exists at: " + backup_dir)
 
-    def watch(self, 
+    def setup_watch(self, 
             polling_interval = 1, 
             on_delete = True, 
             on_move = True, 
             on_create = True):
         patterns = ["*"]
-        print("BEGIN WOTCH")
+        print("setup watch")
         event_handler = PatternMatchingEventHandler(patterns, None, False, True)
         event_handler.on_modified = self.trigger_event
         if on_delete:
@@ -47,14 +48,15 @@ class Watcher:
             event_handler.on_moved = self.trigger_event
         if on_create:
             event_handler.on_created = self.trigger_event
-
-        # Initialize Observer
-        observer = Observer()
-        self.observer - observer
         self.observer.schedule(event_handler, self.dir, recursive=True)
+        self.enabled = True
     
+
+        # TODO create a separate thread to run watcher
+
         # Start the observer
         self.observer.start()
+        self.enabled = True
         try:
             while True:
                 # Set the thread sleep time
@@ -62,19 +64,30 @@ class Watcher:
         except Exception as e:
             print(e)
         self.observer.join()
-        self.initialized_watch()
-
-    def initialized_watch(self):
-        print("Watcher initalized observer on dir: " + self.dir)
-        if self.check_intialize_handler:
-            self.check_intialize_handler()
+        self.initialized = True
 
     def trigger_event(self, event):
         if self.event_handler:
             self.event_handler(event)
 
+    def enable_watcher(self):
+        if self.enabled:
+            pass
+        else:
+            if not self.initialized:
+                self.setup_watch()
+            else:
+                self.observer.start()
+                self.enabled = True
+                print("enabled observer")
+
     def disable_watcher(self):
-        self.observer.stop()
+        if self.enabled is False:
+            pass
+        else:       
+            self.observer.stop()
+            self.enabled = False
+            print("disabled observer")
 
     # TODO build me, OR implement initalizing new observer if it makes sense that way.
     # Likely updating observer's dir probably faster performance wise, gotta test 
