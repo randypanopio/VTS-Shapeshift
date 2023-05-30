@@ -4,6 +4,7 @@ from PySide6 import QtWidgets
 from comms import requests
 from watcher import watcher
 from m_utils import log as logging
+from m_utils import links
 from app_interface.window import Window
 
 class ShapeShift:
@@ -24,64 +25,58 @@ class ShapeShift:
         self.observer = watcher.Watcher(config_data=self.config_json_dict, event_handler=self.process_watcher_update)
 
         # GUI
-        self.app = QtWidgets.QApplication(sys.argv)        
+        self.app = QtWidgets.QApplication(sys.argv)
         self.window = Window()
 
+        # TODO move stylings to window.py
         # vts requests gui
         self.window.connection_button.clicked.connect(self.connect_button)
-        self.window.plugin_status_label.setText("Connected" if self.vts_client.connected else "Offline")
-        self.window.plugin_status_label.setStyleSheet("color: green;" if self.vts_client.connected else "color: red;")
-        self.window.url_input.setText(self.config_json_dict["plugin_settings"]["ws_base_url"])
-        self.window.port_input.setText(self.config_json_dict["plugin_settings"]["ws_port"])        
+        self.window.set_url_inputs(
+            self.config_json_dict["plugin_settings"]["ws_base_url"],
+            self.config_json_dict["plugin_settings"]["ws_port"]
+        )
+        self.window.set_plugin_status(self.vts_client.connected)
 
         # watcher gui
         self.window.watcher_button.clicked.connect(self.watcher_button)
-        self.window.watcher_status_label.setText("Watching..." if self.observer.enabled else "Disabled")
-        self.window.watcher_status_label.setStyleSheet("color: green;" if self.observer.enabled else "color: red;")
-        self.window.directory_input.setEnabled(False if self.observer.enabled else True)
-        self.window.directory_input.setText(self.config_json_dict["plugin_settings"]["model_directory"])
+        self.window.set_watcher_dir_input(self.config_json_dict["plugin_settings"]["model_directory"])
         self.window.browse_button.clicked.connect(self.browse_button)
+        self.window.set_watcher_status(self.observer.enabled)
 
-        # remaining settings gui
+        # remaining gui
         self.window.save_pref_button.clicked.connect(self.save_prefs_button)
-        self.window.model_reload_checkbox.setChecked(self.config_json_dict["plugin_settings"]["reload_model_on_fail"])
-        self.window.update_data_checkbox.setChecked(self.config_json_dict["plugin_settings"]["update_data_on_new_model"])
-        self.window.backup_checkbox.setChecked(self.config_json_dict["plugin_settings"]["backup_folders"])
+        self.window.set_prefs_checkboxes(
+            self.config_json_dict["plugin_settings"]["reload_model_on_fail"],
+            self.config_json_dict["plugin_settings"]["update_data_on_new_model"],
+            self.config_json_dict["plugin_settings"]["backup_folders"]
+        )
 
-
-
+    # region Slots
     # TODO grab cahced url from plugin config, also it should be reflected from settings
     # TODO ui still freezing despite running in a separate thread :(
+    # TODO add blocking calls until all coroutines is finished before allowing new run
     def connect_button(self):
         asyncio.run(self.vts_client.authenticate())
         self.window.plugin_status_label.setText("Connected" if self.vts_client.connected else "Offline")
         self.window.plugin_status_label.setStyleSheet("color: green;" if self.vts_client.connected else "color: red;")
-            
+
     def watcher_button(self):
-        """
-        on start - do nothing
-        check current status and process what to do next (eg toggle on or off)
-        """
-        status = self.observer.enabled
-        if status:
+        if self.observer.enabled:
             self.observer.disable_watcher()
         else:
-            self.observer.enable_watcher() 
-        # Sync UI. True value should only come from observer
-        self.window.watcher_button.setText("Disable" if status else "Enable") # note, status was flipped from status above
-        self.window.watcher_status_label.setText("Disabled" if status else "Watching...")
-        self.window.watcher_status_label.setStyleSheet("color: red;" if status else "color: green;")
-        self.window.directory_input.setEnabled(False if self.observer.enabled else True)
+            self.observer.enable_watcher()
+        self.window.set_watcher_status(self.observer.enabled)
 
     def browse_button(self):
         pass
 
     def save_prefs_button(self):
         pass
+    # endregion
 
     def process_watcher_update(self):
         """
-        my job is to detect new changes from watcher. 
+        my job is to detect new changes from watcher.
         - validate requests and send to ws requests
             - check if vts connection is still valid, reconnect plugin if thats not the case
             - update ui for current plugin status (in cases where reload model isn't running despite the request)
@@ -93,7 +88,7 @@ class ShapeShift:
 
     def open_window(self):
         self.window.show()
-        self.app.exec()    
+        self.app.exec()
 
     def handle_new_models(self):
         pass
@@ -122,7 +117,7 @@ if __name__ == "__main__":
 
 
 
-    
+
 
     # vts_client = vts_requests.VT_Requests(True, new_model_handler=handle_new_models)
     # model_data = asyncio.run(vts_client.get_current_model_data())
