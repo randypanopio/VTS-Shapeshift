@@ -101,7 +101,7 @@ class ShapeShift:
 
 #TODO prefill from plugin config
 if __name__ == "__main__":
-    s = ShapeShift("VTS-Shapeshift/files/debug_config.json")
+    s = ShapeShift("VTS-Shapeshift/debug/debug_config.json")
     s.open_window()
 
 

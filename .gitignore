@@ -1,9 +1,8 @@
 venv/
 test/
 testpy/
+debug/
 
 *__pycache__/
 *.pyc
 *.log
-
-/files/debug_config.json
