@@ -1,16 +1,16 @@
 import sys, asyncio, os, json
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtCore
 
 from comms import requests
 from watcher import watcher
 from m_utils import log as logging
-from m_utils import links
 from app_interface.window import Window
 
 class ShapeShift:
     def __init__(self, config_fp):
         # Plugin Config, used to prepop data
-        if os.path.isfile(config_fp):
+        self.config_fp = config_fp
+        if os.path.isfile(self.config_fp):
             with open(config_fp) as file_handler:
                 try:
                     self.config_json_dict = json.loads(file_handler.read())
@@ -28,9 +28,8 @@ class ShapeShift:
         self.app = QtWidgets.QApplication(sys.argv)
         self.window = Window()
 
-        # TODO move stylings to window.py
         # vts requests gui
-        self.window.connection_button.clicked.connect(self.connect_button)
+        self.window.connection_button.clicked.connect(self.connect_vts_ws)
         self.window.set_url_inputs(
             self.config_json_dict["plugin_settings"]["ws_base_url"],
             self.config_json_dict["plugin_settings"]["ws_port"]
@@ -38,29 +37,40 @@ class ShapeShift:
         self.window.set_plugin_status(self.vts_client.connected)
 
         # watcher gui
-        self.window.watcher_button.clicked.connect(self.watcher_button)
+        self.window.watcher_button.clicked.connect(self.trigger_watcher)
         self.window.set_watcher_dir_input(self.config_json_dict["plugin_settings"]["model_directory"])
         self.window.browse_button.clicked.connect(self.browse_button)
         self.window.set_watcher_status(self.observer.enabled)
 
         # remaining gui
-        self.window.save_pref_button.clicked.connect(self.save_prefs_button)
+        self.window.save_pref_button.clicked.connect(self.save_preferences)
         self.window.set_prefs_checkboxes(
             self.config_json_dict["plugin_settings"]["reload_model_on_fail"],
             self.config_json_dict["plugin_settings"]["update_data_on_new_model"],
-            self.config_json_dict["plugin_settings"]["backup_folders"]
+            self.config_json_dict["plugin_settings"]["backup_folders"],
+            self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]
         )
 
+    # post init functionality
+    def start(self):
+        self.window.show()
+        if self.config_json_dict["cached_auth_token"]:
+            self.connect_vts_ws()
+        if self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]:
+            self.trigger_watcher()
+        self.app.exec()
+
+
     # region Slots
-    # TODO grab cahced url from plugin config, also it should be reflected from settings
     # TODO ui still freezing despite running in a separate thread :(
     # TODO add blocking calls until all coroutines is finished before allowing new run
-    def connect_button(self):
+    def connect_vts_ws(self):
         asyncio.run(self.vts_client.authenticate())
-        self.window.plugin_status_label.setText("Connected" if self.vts_client.connected else "Offline")
-        self.window.plugin_status_label.setStyleSheet("color: green;" if self.vts_client.connected else "color: red;")
+        self.window.set_plugin_status(self.vts_client.connected)
+        self.config_json_dict["cached_auth_token"] = self.vts_client.auth_token
+        self.save_prefs_tofile()
 
-    def watcher_button(self):
+    def trigger_watcher(self):
         if self.observer.enabled:
             self.observer.disable_watcher()
         else:
@@ -68,11 +78,31 @@ class ShapeShift:
         self.window.set_watcher_status(self.observer.enabled)
 
     def browse_button(self):
-        pass
+        dir_path = QtWidgets.QFileDialog.getExistingDirectory(self.window, "Open Model Directory", "")
+        self.config_json_dict["plugin_settings"]["model_directory"] = dir_path
+        self.window.set_watcher_dir_input(dir_path)
+        self.save_prefs_tofile()
 
-    def save_prefs_button(self):
-        pass
+    def save_preferences(self, save_model_dir = False):
+        if save_model_dir:
+            self.config_json_dict["plugin_settings"]["model_directory"] = self.window.directory_input.text()
+        self.config_json_dict["plugin_settings"]["ws_base_url"] = self.window.url_input.text()
+        self.config_json_dict["plugin_settings"]["ws_port"] = self.window.port_input.text()
+        self.config_json_dict["plugin_settings"]["reload_model_on_fail"] = self.window.model_reload_checkbox.isChecked()
+        self.config_json_dict["plugin_settings"]["update_data_on_new_model"] = self.window.update_data_checkbox.isChecked()
+        self.config_json_dict["plugin_settings"]["backup_folders"] = self.window.backup_checkbox.isChecked()
+        self.config_json_dict["plugin_settings"]["start_watcher_on_startup"] = self.window.run_watcher_checkbox.isChecked()
+        self.save_prefs_tofile()
+
     # endregion
+
+    # TODO rewrite as async
+    def save_prefs_tofile(self):
+        with open(self.config_fp, "w") as file_handler:
+            try:
+                file_handler.write(json.dumps(self.config_json_dict))
+            except Exception as e:
+                    print(e)
 
     def process_watcher_update(self):
         """
@@ -86,46 +116,9 @@ class ShapeShift:
         asyncio.run(self.vts_client.reload_current_model())
         # TODO use new_model_event to seamlessly update watcher look directory
 
-    def open_window(self):
-        self.window.show()
-        self.app.exec()
-
     def handle_new_models(self):
         pass
 
-
-#TODO prefill from plugin config
 if __name__ == "__main__":
-    s = ShapeShift("VTS-Shapeshift/debug/debug_config.json")
-    s.open_window()
-
-
-
-
-
-
-# # Watcher
-# cached_dir = "CACHED_PATH" #Prefill from plugin config cache
-# observer = watcher.Watcher(dir=cached_dir, event_handler=process_watcher_update)
-# if os.path.exists(cached_dir):
-#     observer.watch()
-# else:
-#     #TODO disable gui
-#     pass
-
-
-
-
-
-
-
-    # vts_client = vts_requests.VT_Requests(True, new_model_handler=handle_new_models)
-    # model_data = asyncio.run(vts_client.get_current_model_data())
-    # print("JISDBGKJ\n"+json.dumps(model_data))
-    # print("current model id: " + vts_client.model_id)
-    # model_dir = ("D:/SteamLibrary/steamapps/common/VTube Studio/VTube Studio_Data/StreamingAssets/Live2DModels/hiyori_test")
-    # observer = watcher.Watcher(model_dir, event_handler=test)
-    # observer.watch()
-
-
-    #TODO rebuild async logic to call individual async methods inside vts_client, gonna be a doozy when implemented on PySide D:
+    app = ShapeShift("VTS-Shapeshift/debug/debug_config.json")
+    app.start()

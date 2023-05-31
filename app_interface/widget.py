@@ -24,7 +24,8 @@ class Ui_Form(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
-        Form.resize(712, 360)
+        Form.setEnabled(True)
+        Form.resize(781, 375)
         font = QFont()
         font.setFamilies([u"Open Sans"])
         font.setPointSize(10)
@@ -52,6 +53,11 @@ class Ui_Form(object):
 "    border: 1px solid #363636;\n"
 "}\n"
 "\n"
+"QLineEdit:disabled {\n"
+"background-color:rgb(157, 166, 182);\n"
+"\n"
+"}\n"
+"\n"
 "QPushButton {\n"
 "    border: 2px solid #827397;\n"
 "    border-radius: 4px;\n"
@@ -66,7 +72,13 @@ class Ui_Form(object):
 "\n"
 "QPushButton:hover {\n"
 "    border: none; /* no border for a flat push button */\n"
-"}")
+"}\n"
+"\n"
+"QPushButton:disabled {\n"
+"    background-color: #5d576b;\n"
+"	color: #979699;\n"
+"}\n"
+"")
         self.gridLayout = QGridLayout(Form)
         self.gridLayout.setObjectName(u"gridLayout")
         self.verticalLayout_2 = QVBoxLayout()
@@ -95,6 +107,12 @@ class Ui_Form(object):
         self.plugin_status_label = QLabel(Form)
         self.plugin_status_label.setObjectName(u"plugin_status_label")
         self.plugin_status_label.setMinimumSize(QSize(80, 0))
+        font2 = QFont()
+        font2.setFamilies([u"Open Sans"])
+        font2.setBold(False)
+        font2.setItalic(False)
+        self.plugin_status_label.setFont(font2)
+        self.plugin_status_label.setStyleSheet(u"font-size: 22px;")
 
         self.horizontalLayout_17.addWidget(self.plugin_status_label)
 
@@ -179,10 +197,6 @@ class Ui_Form(object):
         self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
         self.label_13 = QLabel(Form)
         self.label_13.setObjectName(u"label_13")
-        font2 = QFont()
-        font2.setFamilies([u"Open Sans"])
-        font2.setBold(False)
-        font2.setItalic(False)
         self.label_13.setFont(font2)
         self.label_13.setStyleSheet(u"font-size: 17px")
 
@@ -196,6 +210,7 @@ class Ui_Form(object):
         self.watcher_status_label = QLabel(Form)
         self.watcher_status_label.setObjectName(u"watcher_status_label")
         self.watcher_status_label.setMinimumSize(QSize(80, 0))
+        self.watcher_status_label.setStyleSheet(u"font-size: 22px;")
 
         self.horizontalLayout_9.addWidget(self.watcher_status_label)
 
@@ -238,6 +253,7 @@ class Ui_Form(object):
 
         self.directory_input = QLineEdit(Form)
         self.directory_input.setObjectName(u"directory_input")
+        self.directory_input.setEnabled(False)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(5)
@@ -248,6 +264,7 @@ class Ui_Form(object):
 
         self.browse_button = QPushButton(Form)
         self.browse_button.setObjectName(u"browse_button")
+        self.browse_button.setEnabled(True)
 
         self.horizontalLayout_15.addWidget(self.browse_button)
 
@@ -324,8 +341,15 @@ class Ui_Form(object):
 
         self.horizontalLayout_12.addWidget(self.backup_checkbox)
 
+        self.run_watcher_checkbox = QCheckBox(Form)
+        self.run_watcher_checkbox.setObjectName(u"run_watcher_checkbox")
+
+        self.horizontalLayout_12.addWidget(self.run_watcher_checkbox)
+
         self.horizontalLayout_12.setStretch(0, 2)
         self.horizontalLayout_12.setStretch(1, 2)
+        self.horizontalLayout_12.setStretch(2, 1)
+        self.horizontalLayout_12.setStretch(3, 1)
 
         self.verticalLayout_4.addLayout(self.horizontalLayout_12)
 
@@ -409,7 +433,7 @@ class Ui_Form(object):
         self.label_21.setText(QCoreApplication.translate("Form", u"  |  ", None))
         self.plugin_status_label.setText(QCoreApplication.translate("Form", u"Offline", None))
         self.connection_button.setText(QCoreApplication.translate("Form", u"Connect", None))
-        self.label_18.setText(QCoreApplication.translate("Form", u"Plugin Connection Settings", None))
+        self.label_18.setText(QCoreApplication.translate("Form", u"Plugin Connection Settings - Likely leave default settings unless specifically modified in VTube Studio", None))
         self.label_19.setText(QCoreApplication.translate("Form", u"URL:", None))
         self.url_input.setText(QCoreApplication.translate("Form", u"ws://localhost:", None))
         self.label_24.setText(QCoreApplication.translate("Form", u"Port:", None))
@@ -418,15 +442,16 @@ class Ui_Form(object):
         self.label_14.setText(QCoreApplication.translate("Form", u"  |  ", None))
         self.watcher_status_label.setText(QCoreApplication.translate("Form", u"Disabled", None))
         self.watcher_button.setText(QCoreApplication.translate("Form", u"Enable", None))
-        self.label_16.setText(QCoreApplication.translate("Form", u"Watcher Settings", None))
+        self.label_16.setText(QCoreApplication.translate("Form", u"Set the folder directory that VTube Studio is using, and where live changes are saved.", None))
         self.label_17.setText(QCoreApplication.translate("Form", u"Model Directory: ", None))
-        self.directory_input.setText("")
+        self.directory_input.setText(QCoreApplication.translate("Form", u"Set your VTube Studio Model Directory!", None))
         self.browse_button.setText(QCoreApplication.translate("Form", u"Browse", None))
         self.label_23.setText(QCoreApplication.translate("Form", u"Shapeshift Plugin Preferences", None))
         self.save_pref_button.setText(QCoreApplication.translate("Form", u"Save Preferences (Requires Restart)", None))
         self.model_reload_checkbox.setText(QCoreApplication.translate("Form", u"Auto Attempt Model Reloads", None))
         self.update_data_checkbox.setText(QCoreApplication.translate("Form", u"Update Data on new Model", None))
         self.backup_checkbox.setText(QCoreApplication.translate("Form", u"Create Backup Folder", None))
+        self.run_watcher_checkbox.setText(QCoreApplication.translate("Form", u"Enable Watcher on Startup", None))
         self.twitter_button.setText(QCoreApplication.translate("Form", u"Contact or Support @ Twitter", None))
         self.github_button.setText(QCoreApplication.translate("Form", u"Support Project @ GitHub", None))
     # retranslateUi

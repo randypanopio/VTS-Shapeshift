@@ -2,12 +2,15 @@
 <ui version="4.0">
  <class>Form</class>
  <widget class="QWidget" name="Form">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>712</width>
-    <height>360</height>
+    <width>781</width>
+    <height>375</height>
    </rect>
   </property>
   <property name="font">
@@ -45,6 +48,11 @@ color:rgb(21, 21, 21);
     border: 1px solid #363636;
 }
 
+QLineEdit:disabled {
+background-color:rgb(157, 166, 182);
+
+}
+
 QPushButton {
     border: 2px solid #827397;
     border-radius: 4px;
@@ -59,7 +67,13 @@ QPushButton:pressed {
 
 QPushButton:hover {
     border: none; /* no border for a flat push button */
-}</string>
+}
+
+QPushButton:disabled {
+    background-color: #5d576b;
+	color: #979699;
+}
+</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
@@ -101,6 +115,17 @@ QPushButton:hover {
              <width>80</width>
              <height>0</height>
             </size>
+           </property>
+           <property name="font">
+            <font>
+             <family>Open Sans</family>
+             <pointsize>-1</pointsize>
+             <italic>false</italic>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">font-size: 22px;</string>
            </property>
            <property name="text">
             <string>Offline</string>
@@ -160,7 +185,7 @@ height: 42px;</string>
           <string notr="true"/>
          </property>
          <property name="text">
-          <string>Plugin Connection Settings</string>
+          <string>Plugin Connection Settings - Likely leave default settings unless specifically modified in VTube Studio</string>
          </property>
         </widget>
        </item>
@@ -249,6 +274,9 @@ height: 42px;</string>
              <height>0</height>
             </size>
            </property>
+           <property name="styleSheet">
+            <string notr="true">font-size: 22px;</string>
+           </property>
            <property name="text">
             <string>Disabled</string>
            </property>
@@ -313,7 +341,7 @@ height: 42px;</string>
           <string notr="true"/>
          </property>
          <property name="text">
-          <string>Watcher Settings</string>
+          <string>Set the folder directory that VTube Studio is using, and where live changes are saved.</string>
          </property>
         </widget>
        </item>
@@ -331,6 +359,9 @@ height: 42px;</string>
          </item>
          <item>
           <widget class="QLineEdit" name="directory_input">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -338,12 +369,15 @@ height: 42px;</string>
             </sizepolicy>
            </property>
            <property name="text">
-            <string/>
+            <string>Set your VTube Studio Model Directory!</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="browse_button">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
            <property name="text">
             <string>Browse</string>
            </property>
@@ -405,7 +439,7 @@ height: 42px;</string>
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_12" stretch="2,2,0">
+        <layout class="QHBoxLayout" name="horizontalLayout_12" stretch="2,2,1,1">
          <item>
           <widget class="QCheckBox" name="model_reload_checkbox">
            <property name="text">
@@ -445,6 +479,13 @@ height: 42px;</string>
            </property>
            <property name="tristate">
             <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="run_watcher_checkbox">
+           <property name="text">
+            <string>Enable Watcher on Startup</string>
            </property>
           </widget>
          </item>

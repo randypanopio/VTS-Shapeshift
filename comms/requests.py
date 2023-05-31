@@ -8,7 +8,7 @@ class VT_Requests:
         self.model_id: string = ""
         self.model_data = None
         self.new_model_handler = new_model_handler
-        
+
         # Prefil from config
         if config_data["plugin_config"]:
             self.plugin_config = config_data["plugin_config"]
@@ -37,14 +37,14 @@ class VT_Requests:
         base = config_data["plugin_settings"]["ws_base_url"]
         port = config_data["plugin_settings"]["ws_port"]
         if base and port:
-            self.url = base + ":" if not base.endswith(":") else "" + port
+            self.url = "{0}{1}{2}".format(base, ":" if not base.endswith(":") else "", port)
         else:
             self.url: string = "ws://localhost:8001"
-            
+
         self.websocket = websocket.WebSocketConnection(self.url)
         self.connected = False
         self.attempted_first_auth = False
-        self.reload_model_attempts = 0        
+        self.reload_model_attempts = 0
 
     # Use me for functionality that modifies model/scene. Rather than creating listeners for model updates,
     # this is a clean way of updating following requests based on changes, or blocking invalid requests.
@@ -54,7 +54,7 @@ class VT_Requests:
         print("Validating Model Data")
         print("$$ {} request message:\n{}".format(type, msg))
         await self.websocket.send(msg)
-        response = await self.websocket.receive() 
+        response = await self.websocket.receive()
         print("$$ {} response:\n{}".format(type, response))
 
         if not result:
@@ -90,16 +90,16 @@ class VT_Requests:
         msg = json.dumps(self._standard_payload(type))
         print("$$ {} request message:\n{}".format(type, msg))
         await self.websocket.send(msg)
-        response = await self.websocket.receive() 
+        response = await self.websocket.receive()
         print("$$ {} response:\n{}".format(type, response))
-        return json.loads(response)  
+        return json.loads(response)
 
     async def _get_auth_token(self):
         type = "AuthenticationTokenRequest"
         msg = json.dumps(self._standard_payload(type))
         print("$$ {} request message:\n{}".format(type, msg))
         await self.websocket.send(msg)
-        response = await self.websocket.receive() 
+        response = await self.websocket.receive()
         print("$$ {} response:\n{}".format(type, response))
 
         if not response:
@@ -130,22 +130,22 @@ class VT_Requests:
         msg = json.dumps(dict_msg)
         print("$$ {} request message:\n{}".format(type, msg))
         await self.websocket.send(msg)
-        response = await self.websocket.receive() 
+        response = await self.websocket.receive()
         print("$$ {} response:\n{}".format(type, response))
 
         if not response:
+            print("Unnable to authenticate")
+            self.auth_token = ""
             self.connected = False
             return False
         result = json.loads(response)
         if "data" in result:
             data = result["data"]
-            if data["authenticated"] is False:
-                print("Failed to authenticate")
-                self.connected = False
-            else:
-                print("Authenticated session")
+            if data["authenticated"]:
                 self.connected = True
                 return True
+        print("Failed to authenticate")
+        self.auth_token = ""
         self.connected = False
         return False
 
@@ -154,7 +154,7 @@ class VT_Requests:
         msg = json.dumps(self._standard_payload(type))
         print("$$ {} request message:\n{}".format(type, msg))
         await self.websocket.send(msg)
-        response = await self.websocket.receive() 
+        response = await self.websocket.receive()
         print("$$ {} response:\n{}".format(type, response))
 
         if not result:
@@ -177,7 +177,7 @@ class VT_Requests:
 
         # check if model was updated
         if not self.validate_model():
-            pass # model has been updated, no need to use watcher reload since we need to update model data first 
+            pass # model has been updated, no need to use watcher reload since we need to update model data first
         else:
             type = "ModelLoadRequest"
             dict_msg = self._standard_payload(type)
@@ -185,7 +185,7 @@ class VT_Requests:
             msg = json.dumps(dict_msg)
             print("$$ {} request message:\n{}".format(type, msg))
             await self.websocket.send(msg)
-            response = await self.websocket.receive() 
+            response = await self.websocket.receive()
             print("$$ {} response:\n{}".format(type, response))
 
             if not result:
@@ -198,7 +198,7 @@ class VT_Requests:
                     if data_dict["errorID"] == 153 and self.reload_model_on_fail:
                         if self.reload_model_attempts >= 4:
                             print("Maxed out auto reload model attempts. Something went wrong")
-                        else:                            
+                        else:
                             # hit 2 second cooldown, wait buffer time before attempting again.
                             await asyncio.sleep(2.5)
                             self.reload_model_attempts += 1
@@ -206,7 +206,7 @@ class VT_Requests:
                 else:
                     self.reload_model_attempts = 0
     # endregion
- 
+
     # region Events
     def new_model_event(self):
         if self.new_model_handler:

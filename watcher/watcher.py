@@ -22,16 +22,17 @@ class Watcher:
         self.enabled = False
         self.initialized = False
 
-    def setup_watch(self, 
-            polling_interval = 1, 
-            on_delete = True, 
-            on_move = True, 
+    # TODO rebuild watcher to run on separate thread and still be callable
+    def setup_watch(self,
+            polling_interval = 1,
+            on_delete = True,
+            on_move = True,
             on_create = True):
-        
+
         if not self.dir:
             print("Directory has not yet been set up")
             return
-        
+
         patterns = ["*"]
         print("setup watch")
         event_handler = PatternMatchingEventHandler(patterns, None, False, True)
@@ -44,7 +45,7 @@ class Watcher:
             event_handler.on_created = self.trigger_event
         self.observer.schedule(event_handler, self.dir, recursive=True)
         self.enabled = True
-    
+
 
         # TODO create a separate thread to run watcher
 
@@ -78,16 +79,16 @@ class Watcher:
     def disable_watcher(self):
         if self.enabled is False:
             pass
-        else:       
+        else:
             self.observer.stop()
             self.enabled = False
             print("disabled observer")
 
     # TODO build me, OR implement initalizing new observer if it makes sense that way.
-    # Likely updating observer's dir probably faster performance wise, gotta test 
+    # Likely updating observer's dir probably faster performance wise, gotta test
     def update_directory(self, directory):
         pass
-  
+
     def create_backup(self):
         backup_dir = os.path.join(self.dir, self.current_backup_dir_name)
 
