@@ -20,14 +20,11 @@ class ShapeShift:
 
         # VTS Connection
         self.vts_client = requests.VT_Requests(config_data=self.config_json_dict, new_model_handler=self.handle_new_models)
-
         # Watcher
         self.observer = watcher.Watcher(config_data=self.config_json_dict, event_handler=self.process_watcher_update)
-
         # GUI
         self.app = QtWidgets.QApplication(sys.argv)
         self.window = Window()
-
         # vts requests gui
         self.window.connection_button.clicked.connect(self.connect_vts_ws)
         self.window.set_url_inputs(
@@ -35,13 +32,11 @@ class ShapeShift:
             self.config_json_dict["plugin_settings"]["ws_port"]
         )
         self.window.set_plugin_status(self.vts_client.connected)
-
         # watcher gui
         self.window.watcher_button.clicked.connect(self.trigger_watcher)
         self.window.set_watcher_dir_input(self.config_json_dict["plugin_settings"]["model_directory"])
         self.window.browse_button.clicked.connect(self.browse_button)
         self.window.set_watcher_status(self.observer.enabled)
-
         # remaining gui
         self.window.save_pref_button.clicked.connect(self.save_preferences)
         self.window.set_prefs_checkboxes(
@@ -51,7 +46,6 @@ class ShapeShift:
             self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]
         )
 
-    # post init functionality
     def start(self):
         self.window.show()
         if self.config_json_dict["cached_auth_token"]:
@@ -60,9 +54,7 @@ class ShapeShift:
             self.trigger_watcher()
         self.app.exec()
 
-
     # region Slots
-    # TODO ui still freezing despite running in a separate thread :(
     # TODO add blocking calls until all coroutines is finished before allowing new run
     def connect_vts_ws(self):
         asyncio.run(self.vts_client.authenticate())
