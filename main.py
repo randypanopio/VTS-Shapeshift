@@ -46,7 +46,10 @@ class ShapeShift:
             self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]
         )
 
-    def start(self):
+    def kill_threads(self):
+        self.observer.kill_watcher()
+
+    def begin(self):
         self.window.show()
         if self.config_json_dict["cached_auth_token"]:
             self.connect_vts_ws()
@@ -113,4 +116,5 @@ class ShapeShift:
 
 if __name__ == "__main__":
     app = ShapeShift("VTS-Shapeshift/debug/debug_config.json")
-    app.start()
+    app.begin()
+    app.kill_threads()
