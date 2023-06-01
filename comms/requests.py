@@ -181,19 +181,16 @@ class VT_Requests(threading.Thread):
 
     # region Live functions - AKA functions used post init
     async def reload_current_model(self):
-        print("attempting model reload")
         # check vts connection status
         if not self.connected:
             await self.authenticate()
-            print("attempted to conn")
 
         # check if data has not yet been loaded
         if not self.model_id:
-            self.request_model_data()
-            print("attempted to load data")
+            await self.request_model_data()
 
         # check if model was updated
-        if not self.validate_model():
+        if not await self.validate_model():
             pass # model has been updated, no need to use watcher reload since we need to update model data first
         else:
             type = "ModelLoadRequest"

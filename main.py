@@ -39,7 +39,7 @@ class ShapeShift:
         # watcher gui
         self.window.watcher_button.clicked.connect(self.trigger_watcher)
         self.window.set_watcher_dir_input(self.config_json_dict["plugin_settings"]["model_directory"])
-        self.window.browse_button.clicked.connect(self.debug)
+        self.window.browse_button.clicked.connect(self.browse_button)
         self.window.set_watcher_status(self.observer.is_enabled)
         # remaining gui
         self.window.save_pref_button.clicked.connect(self.save_preferences)
@@ -103,10 +103,6 @@ class ShapeShift:
             except Exception as e:
                     print(e)
 
-    def debug(self):
-        asyncio.run(self.vts_client.reload_current_model())
-        print("debug model reload")
-
     def process_watcher_update(self, event):
         """
         TODO
@@ -118,47 +114,13 @@ class ShapeShift:
             - handle based on settings (update watcher or deactivate watcher)
         """
         self.loop.create_task(self.vts_client.reload_current_model())
-        print("watcher event trig")
         # TODO use new_model_event to seamlessly update watcher look directory
 
     def handle_new_models(self):
         print("New Model Detected")
         pass
 
-def ddb(event):
-    print("on main event")
-
-
 if __name__ == "__main__":
     app = ShapeShift("VTS-Shapeshift/debug/debug_config.json")
     app.begin()
     app.kill_threads()
-
-
-    # config_fp = "VTS-Shapeshift/debug/debug_config.json"
-    # if os.path.isfile(config_fp):
-    #     with open(config_fp) as file_handler:
-    #         try:
-    #             print("zako")
-    #             config_json_dict = json.loads(file_handler.read())
-    #             mdir = "D:/SteamLibrary/steamapps/common/VTube Studio/VTube Studio_Data/StreamingAssets/Live2DModels"
-    #             observer = watcher.Watcher(config_data=config_json_dict, event_handler=ddb)
-    #             observer.enable_watcher()
-    #         except Exception as e:
-    #             print(e)
-
-    # from watcher import test_wt
-    # # wt = test_wt.Test_Watcher("D:/Projects/Big Mistake/watchdog tester")
-    # # wt.enable_watcher()
-    # wt = test_wt.Test_Watcher(dir="D:/Projects/Big Mistake/watchdog tester", event_handler=ddb)
-    # wt.enable_watcher()
-
-    # try:
-    #     while True:
-    #         pass
-    # except KeyboardInterrupt:
-
-    #     print("keel")
-    #     wt.kill_thread()
-    pass
-
