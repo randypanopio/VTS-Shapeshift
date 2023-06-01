@@ -39,7 +39,7 @@ class ShapeShift:
         # watcher gui
         self.window.watcher_button.clicked.connect(self.trigger_watcher)
         self.window.set_watcher_dir_input(self.config_json_dict["plugin_settings"]["model_directory"])
-        self.window.browse_button.clicked.connect(self.browse_button)
+        self.window.browse_button.clicked.connect(self.debug)
         self.window.set_watcher_status(self.observer.is_enabled)
         # remaining gui
         self.window.save_pref_button.clicked.connect(self.save_preferences)
@@ -102,6 +102,10 @@ class ShapeShift:
                 file_handler.write(json.dumps(self.config_json_dict))
             except Exception as e:
                     print(e)
+
+    def debug(self):
+        asyncio.run(self.vts_client.reload_current_model())
+        print("debug model reload")
 
     def process_watcher_update(self, event):
         """

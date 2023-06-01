@@ -70,7 +70,7 @@ class VT_Requests(threading.Thread):
         response = await self.websocket.receive()
         print("$$ {} response:\n{}".format(type, response))
 
-        if not result:
+        if not response:
             return False
         result = json.loads(response)
         if "data" in result:
@@ -171,7 +171,7 @@ class VT_Requests(threading.Thread):
         response = await self.websocket.receive()
         print("$$ {} response:\n{}".format(type, response))
 
-        if not result:
+        if not response:
             return None
         result = json.loads(response)
         if "data" in result:
@@ -181,6 +181,7 @@ class VT_Requests(threading.Thread):
 
     # region Live functions - AKA functions used post init
     async def reload_current_model(self):
+        print("attempting model reload")
         # check vts connection status
         if not self.connected:
             await self.authenticate()
@@ -204,7 +205,7 @@ class VT_Requests(threading.Thread):
             response = await self.websocket.receive()
             print("$$ {} response:\n{}".format(type, response))
 
-            if not result:
+            if not response:
                 return
             result = json.loads(response)
             if "data" in result:
