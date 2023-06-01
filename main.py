@@ -8,6 +8,10 @@ from app_interface.window import Window
 
 class ShapeShift:
     def __init__(self, config_fp):
+        # create loop
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+
         # Plugin Config, used to prepop data
         self.config_fp = config_fp
         if os.path.isfile(self.config_fp):
@@ -36,7 +40,7 @@ class ShapeShift:
         self.window.watcher_button.clicked.connect(self.trigger_watcher)
         self.window.set_watcher_dir_input(self.config_json_dict["plugin_settings"]["model_directory"])
         self.window.browse_button.clicked.connect(self.browse_button)
-        self.window.set_watcher_status(self.observer.enabled)
+        self.window.set_watcher_status(self.observer.is_enabled)
         # remaining gui
         self.window.save_pref_button.clicked.connect(self.save_preferences)
         self.window.set_prefs_checkboxes(
@@ -47,7 +51,8 @@ class ShapeShift:
         )
 
     def kill_threads(self):
-        self.observer.kill_watcher()
+        self.observer.kill_thread()
+        self.vts_client.kill_thread()
 
     def begin(self):
         self.window.show()
@@ -57,21 +62,20 @@ class ShapeShift:
             self.trigger_watcher()
         self.app.exec()
 
-    # region Slots
-    # TODO add blocking calls until all coroutines is finished before allowing new run
     def connect_vts_ws(self):
-        asyncio.run(self.vts_client.authenticate())
+        self.loop.run_until_complete(self.vts_client.authenticate())
         self.window.set_plugin_status(self.vts_client.connected)
         self.config_json_dict["cached_auth_token"] = self.vts_client.auth_token
         self.save_prefs_tofile()
 
     def trigger_watcher(self):
-        if self.observer.enabled:
+        if self.observer.is_enabled:
             self.observer.disable_watcher()
         else:
             self.observer.enable_watcher()
-        self.window.set_watcher_status(self.observer.enabled)
+        self.window.set_watcher_status(self.observer.is_enabled)
 
+    # region remaining Slots
     def browse_button(self):
         dir_path = QtWidgets.QFileDialog.getExistingDirectory(self.window, "Open Model Directory", "")
         self.config_json_dict["plugin_settings"]["model_directory"] = dir_path
@@ -99,22 +103,58 @@ class ShapeShift:
             except Exception as e:
                     print(e)
 
-    def process_watcher_update(self):
+    def process_watcher_update(self, event):
         """
-        my job is to detect new changes from watcher.
+        TODO
+        job is to detect new changes from watcher.
         - validate requests and send to ws requests
             - check if vts connection is still valid, reconnect plugin if thats not the case
             - update ui for current plugin status (in cases where reload model isn't running despite the request)
         - cases of invalid might be verifying if watcher is looking at the correct dir (eg vts changed models, were not gonna set up events to listen for model changes since that really isn't the scope of this tool)
             - handle based on settings (update watcher or deactivate watcher)
         """
-        asyncio.run(self.vts_client.reload_current_model())
+        self.loop.create_task(self.vts_client.reload_current_model())
+        print("watcher event trig")
         # TODO use new_model_event to seamlessly update watcher look directory
 
     def handle_new_models(self):
+        print("New Model Detected")
         pass
+
+def ddb(event):
+    print("on main event")
+
 
 if __name__ == "__main__":
     app = ShapeShift("VTS-Shapeshift/debug/debug_config.json")
     app.begin()
     app.kill_threads()
+
+
+    # config_fp = "VTS-Shapeshift/debug/debug_config.json"
+    # if os.path.isfile(config_fp):
+    #     with open(config_fp) as file_handler:
+    #         try:
+    #             print("zako")
+    #             config_json_dict = json.loads(file_handler.read())
+    #             mdir = "D:/SteamLibrary/steamapps/common/VTube Studio/VTube Studio_Data/StreamingAssets/Live2DModels"
+    #             observer = watcher.Watcher(config_data=config_json_dict, event_handler=ddb)
+    #             observer.enable_watcher()
+    #         except Exception as e:
+    #             print(e)
+
+    # from watcher import test_wt
+    # # wt = test_wt.Test_Watcher("D:/Projects/Big Mistake/watchdog tester")
+    # # wt.enable_watcher()
+    # wt = test_wt.Test_Watcher(dir="D:/Projects/Big Mistake/watchdog tester", event_handler=ddb)
+    # wt.enable_watcher()
+
+    # try:
+    #     while True:
+    #         pass
+    # except KeyboardInterrupt:
+
+    #     print("keel")
+    #     wt.kill_thread()
+    pass
+

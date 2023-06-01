@@ -1,13 +1,18 @@
-import json, secrets, string, asyncio
+import json, secrets, string, asyncio, threading
 from m_utils import log as logging
 from comms import ws as websocket
 
 # TODO convert logging
-class VT_Requests:
+class VT_Requests(threading.Thread):
     def __init__(self, config_data, new_model_handler = None):
+        super().__init__()
+        self.thread = threading.Thread(target=self.run)
         self.model_id: string = ""
         self.model_data = None
         self.new_model_handler = new_model_handler
+        self.connected = False
+        self.attempted_first_auth = False
+        self.reload_model_attempts = 0
 
         # Prefil from config
         if config_data["plugin_config"]:
@@ -17,7 +22,7 @@ class VT_Requests:
                 "apiName": "VTubeStudioPublicAPI",
                 "apiVersion": "1.0",
                 "pluginName": "VTS-Shapeshift",
-                "pluginDeveloper": "Randy Panopio"}
+                "pluginDeveloper": "RandyLmao - Randy P"}
 
         if config_data["cached_auth_token"]:
             self.auth_token = config_data["cached_auth_token"]
@@ -41,10 +46,18 @@ class VT_Requests:
         else:
             self.url: string = "ws://localhost:8001"
 
+        # Create and set up a new event loop for the thread
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+        self.thread.start() # start this class' thread
+
+        # connect ws using created thread
         self.websocket = websocket.WebSocketConnection(self.url)
-        self.connected = False
-        self.attempted_first_auth = False
-        self.reload_model_attempts = 0
+        self.loop.create_task(self.websocket.connect())
+
+    # threading
+    def run(self):
+        pass
 
     # Use me for functionality that modifies model/scene. Rather than creating listeners for model updates,
     # this is a clean way of updating following requests based on changes, or blocking invalid requests.
@@ -119,6 +132,7 @@ class VT_Requests:
         if "data" in status:
             if status["data"]["currentSessionAuthenticated"] is True:
                 self.connected = True
+                print("Already Authenticated")
                 return True
             else:
                 self.connected = False
@@ -170,10 +184,12 @@ class VT_Requests:
         # check vts connection status
         if not self.connected:
             await self.authenticate()
+            print("attempted to conn")
 
         # check if data has not yet been loaded
         if not self.model_id:
             self.request_model_data()
+            print("attempted to load data")
 
         # check if model was updated
         if not self.validate_model():
@@ -205,10 +221,18 @@ class VT_Requests:
                             await self.reload_current_model()
                 else:
                     self.reload_model_attempts = 0
+                    print("reload model success")
     # endregion
 
     # region Events
+    # NOTE not too familiar with threading, but I'm not passing any data so this should not cause any thread related issues
     def new_model_event(self):
         if self.new_model_handler:
             self.new_model_handler()
     # endregion
+
+    def kill_thread(self):
+        if self.thread is not None and self.thread.is_alive():
+            self.loop.call_soon_threadsafe(self.loop.stop)
+            self.thread.join()
+            self.thread = None

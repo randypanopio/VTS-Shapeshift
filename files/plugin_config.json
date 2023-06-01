@@ -3,14 +3,15 @@
         "apiName": "VTubeStudioPublicAPI",
         "apiVersion": "1.0",
         "pluginName": "VTS-Shapeshift",
-        "pluginDeveloper": "Randy Panopio"
+        "pluginDeveloper": "RandyLmao - Randy P"
     },
     "cached_auth_token": "",
     "plugin_settings": {
         "reload_model_on_fail": true,
         "update_data_on_new_model": true,
         "backup_folders": true,
-        "model_directory": "",
+        "start_watcher_on_startup": false,
+        "model_directory": "Set your VTube Studio Model Directory!",
         "ws_base_url": "ws://localhost:",
         "ws_port" : "8001"
     }

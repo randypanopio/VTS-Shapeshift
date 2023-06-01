@@ -508,37 +508,6 @@ height: 42px;</string>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <widget class="QPushButton" name="twitter_button">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="font">
-            <font>
-             <family>Open Sans</family>
-             <pointsize>10</pointsize>
-             <italic>false</italic>
-             <bold>false</bold>
-             <underline>true</underline>
-            </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton {
-	background-color:none; border:none;
-}
-
-QPushButton:hover {
-    color: #FFBD69; /* no border for a flat push button */
-}</string>
-           </property>
-           <property name="text">
-            <string>Contact or Support @ Twitter</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QPushButton" name="github_button">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -565,7 +534,38 @@ QPushButton:hover {
 }</string>
            </property>
            <property name="text">
-            <string>Support Project @ GitHub</string>
+            <string>Support @ GitHub</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="twitter_button">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <family>Open Sans</family>
+             <pointsize>10</pointsize>
+             <italic>false</italic>
+             <bold>false</bold>
+             <underline>true</underline>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton {
+	background-color:none; border:none;
+}
+
+QPushButton:hover {
+    color: #FFBD69; /* no border for a flat push button */
+}</string>
+           </property>
+           <property name="text">
+            <string>Contact @ Twitter</string>
            </property>
           </widget>
          </item>

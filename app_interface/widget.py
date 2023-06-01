@@ -368,34 +368,19 @@ class Ui_Form(object):
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.twitter_button = QPushButton(Form)
-        self.twitter_button.setObjectName(u"twitter_button")
+        self.github_button = QPushButton(Form)
+        self.github_button.setObjectName(u"github_button")
         sizePolicy2 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy2.setHorizontalStretch(0)
         sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.twitter_button.sizePolicy().hasHeightForWidth())
-        self.twitter_button.setSizePolicy(sizePolicy2)
+        sizePolicy2.setHeightForWidth(self.github_button.sizePolicy().hasHeightForWidth())
+        self.github_button.setSizePolicy(sizePolicy2)
         font3 = QFont()
         font3.setFamilies([u"Open Sans"])
         font3.setPointSize(10)
         font3.setBold(False)
         font3.setItalic(False)
         font3.setUnderline(True)
-        self.twitter_button.setFont(font3)
-        self.twitter_button.setStyleSheet(u"QPushButton {\n"
-"	background-color:none; border:none;\n"
-"}\n"
-"\n"
-"QPushButton:hover {\n"
-"    color: #FFBD69; /* no border for a flat push button */\n"
-"}")
-
-        self.horizontalLayout.addWidget(self.twitter_button)
-
-        self.github_button = QPushButton(Form)
-        self.github_button.setObjectName(u"github_button")
-        sizePolicy2.setHeightForWidth(self.github_button.sizePolicy().hasHeightForWidth())
-        self.github_button.setSizePolicy(sizePolicy2)
         self.github_button.setFont(font3)
         self.github_button.setStyleSheet(u"QPushButton {\n"
 "	background-color:none; border:none;\n"
@@ -406,6 +391,21 @@ class Ui_Form(object):
 "}")
 
         self.horizontalLayout.addWidget(self.github_button)
+
+        self.twitter_button = QPushButton(Form)
+        self.twitter_button.setObjectName(u"twitter_button")
+        sizePolicy2.setHeightForWidth(self.twitter_button.sizePolicy().hasHeightForWidth())
+        self.twitter_button.setSizePolicy(sizePolicy2)
+        self.twitter_button.setFont(font3)
+        self.twitter_button.setStyleSheet(u"QPushButton {\n"
+"	background-color:none; border:none;\n"
+"}\n"
+"\n"
+"QPushButton:hover {\n"
+"    color: #FFBD69; /* no border for a flat push button */\n"
+"}")
+
+        self.horizontalLayout.addWidget(self.twitter_button)
 
 
         self.verticalLayout_9.addLayout(self.horizontalLayout)
@@ -452,7 +452,7 @@ class Ui_Form(object):
         self.update_data_checkbox.setText(QCoreApplication.translate("Form", u"Update Data on new Model", None))
         self.backup_checkbox.setText(QCoreApplication.translate("Form", u"Create Backup Folder", None))
         self.run_watcher_checkbox.setText(QCoreApplication.translate("Form", u"Enable Watcher on Startup", None))
-        self.twitter_button.setText(QCoreApplication.translate("Form", u"Contact or Support @ Twitter", None))
-        self.github_button.setText(QCoreApplication.translate("Form", u"Support Project @ GitHub", None))
+        self.github_button.setText(QCoreApplication.translate("Form", u"Support @ GitHub", None))
+        self.twitter_button.setText(QCoreApplication.translate("Form", u"Contact @ Twitter", None))
     # retranslateUi
 

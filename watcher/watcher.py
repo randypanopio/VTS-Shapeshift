@@ -1,6 +1,6 @@
-import os, shutil, sys, time, string, threading
+import os, shutil, sys, time, string, threading, logging
 from watchdog.observers import Observer
-from m_utils import log as logging
+# from m_utils import log as logging
 from watchdog.events import LoggingEventHandler, PatternMatchingEventHandler
 
 
@@ -12,78 +12,70 @@ class Watcher(threading.Thread):
     current_backup_dir_name = ".current_watcher_backup"
     previous_session_backup_name = ".previous_watcher_backup"
 
-    def __init__(self, config_data, event_handler = None, trigger_on_delete = True, trigger_on_move = True, trigger_on_create = True):
+    def __init__(
+            self, config_data,
+            event_handler,
+            trigger_on_delete = True,
+            trigger_on_move = True,
+            trigger_on_create = True
+            ):
         super().__init__()
         if config_data["plugin_settings"]["model_directory"]:
             self.dir = os.path.abspath(config_data["plugin_settings"]["model_directory"])
         else:
             self.dir: string = ""
-        self.trigger_on_delete = trigger_on_delete
-        self.trigger_on_move = trigger_on_move
-        self.trigger_on_create = trigger_on_create
-        self.event_handler = event_handler
+
         self.observer = Observer()
-        self.enabled = False
-        self.initialized = False
-        self._stop_event = threading.Event()
-        self.observer_thread = None
+        patterns = ["*"]
+        self.event_handler = event_handler
+        self.scheduler_event_handler = PatternMatchingEventHandler(patterns, None, False, True)
+        self.scheduler_event_handler.on_modified = self.trigger_event
+        if trigger_on_delete: self.scheduler_event_handler.on_deleted = self.trigger_event
+        if trigger_on_move: self.scheduler_event_handler.on_moved = self.trigger_event
+        if trigger_on_create: self.scheduler_event_handler.on_created = self.trigger_event
+        self.observer.schedule(self.scheduler_event_handler, self.dir, recursive=True)
+
+        self.is_enabled = False
+
 
     def run(self):
-        patterns = ["*"]
-        event_handler = PatternMatchingEventHandler(patterns, None, False, True)
-        event_handler.on_modified = self.trigger_event
-        if self.trigger_on_delete:
-            event_handler.on_deleted = self.trigger_event
-        if self.trigger_on_move:
-            event_handler.on_moved = self.trigger_event
-        if self.trigger_on_create:
-            event_handler.on_created = self.trigger_event
-        self.observer.schedule(event_handler, self.dir, recursive=True)
-
+        self.is_enabled = True
+        self.observer.start()
         try:
-            while not self._stop_event.is_set():
+            while self.is_enabled:
                 time.sleep(1)
-        except:
-            self.observer.stop()
+        except KeyboardInterrupt:
+            self.stop()
 
-    def trigger_event(self, event):
-        if self.event_handler:
-            self.event_handler(event)
+    def stop(self):
+        self.is_enabled = False
+        self.observer.stop()
+        self.observer.join()
 
-    # This gets called by main thread when I want to turn on the watchdog events
     def enable_watcher(self):
-        if not self.dir:
-            print("Directory has not yet been set up")
-            return
-        if not self.enabled and self.observer_thread is None:
-            self.observer_thread = threading.Thread(target=self.run)
-            self.observer_thread.start()
-            self.enabled = True
+        if not self.is_enabled:
+            self.start()
             print("Enabled observer")
 
-    # This gets called by main thread when I want to turn off the watchdog events, i should be able to turn on and off at will
     def disable_watcher(self):
-        if self.enabled and self.observer_thread is not None:
-            self._stop_event.set()
-            self.observer_thread.join()
-            self.observer_thread = None
-            self.enabled = False
+        if self.is_enabled:
+            self.stop()
             print("Disabled observer")
 
     def update_directory(self, directory):
         self.dir = os.path.abspath(directory)
-        self.disable_watcher()
-        self.enable_watcher()
+        self.observer.unschedule_all()
+        self.observer.schedule(self.event_handler, self.dir, recursive=True)
+        print("Directory updated to:", self.dir)
 
-    def kill_watcher(self):
+    def kill_thread(self):
         self.disable_watcher()
-        self._stop_event.set()
-        self.observer.stop()
-        self.enabled = False
-        self.disable_watcher()
-        if self.observer_thread is not None:
-            self.observer_thread.join()
+        self.join()
 
+    def trigger_event(self, event):
+        self.event_handler(event)
+
+    # TODO move backup logic to a new class
     def create_backup(self):
         backup_dir = os.path.join(self.dir, self.current_backup_dir_name)
 
