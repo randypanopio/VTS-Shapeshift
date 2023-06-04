@@ -49,6 +49,7 @@ class VT_Requests(threading.Thread):
         # Create and set up a new event loop for the thread
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
+        self.thread.name = "VT_Requests_Thread"
         self.thread.start() # start this class' thread
 
         # connect ws using created thread
@@ -230,7 +231,7 @@ class VT_Requests(threading.Thread):
     # endregion
 
     def kill_thread(self):
-        if self.thread is not None and self.thread.is_alive():
-            self.loop.call_soon_threadsafe(self.loop.stop)
-            self.thread.join()
-            self.thread = None
+        self.loop.call_soon_threadsafe(self.loop.stop)
+        self.thread.join()
+        self.thread = None
+        print("killed requests")

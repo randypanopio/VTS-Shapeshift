@@ -1,17 +1,16 @@
-import os, shutil, sys, time, string, threading, logging
+import os, time, string, threading
 from watchdog.observers import Observer
-# from m_utils import log as logging
+from m_utils import log as logging
 from watchdog.events import LoggingEventHandler, PatternMatchingEventHandler
 
+"""
+NOTE I dunno how to properly handle the observer thread.
+I could go the nasty route and just have a permanent watcher subprocess in the background
+And instead of disabling the thread, just ignore trigger callbacks
+- not very performant :( - maybe a TODO revisit later way down the road
+"""
 
 class Watcher(threading.Thread):
-    """
-        create a backup for current session. on new sess, check if backup exists, if not create backup
-        if backup folder exists, compare if backup matches latest files, if not matching, create new backup?
-    """
-    current_backup_dir_name = ".current_watcher_backup"
-    previous_session_backup_name = ".previous_watcher_backup"
-
     def __init__(
             self, config_data,
             event_handler,
@@ -34,58 +33,46 @@ class Watcher(threading.Thread):
         if trigger_on_move: self.scheduler_event_handler.on_moved = self.trigger_event
         if trigger_on_create: self.scheduler_event_handler.on_created = self.trigger_event
         self.observer.schedule(self.scheduler_event_handler, self.dir, recursive=True)
+        self.observer.name = "Watchdog_Thread"
 
         self.is_enabled = False
-
+        self.thread = threading.Thread(target=self.run)
+        self.thread.name = "Watcher_Thread"
+        self.should_stop = threading.Event()
+        self.thread.start()
 
     def run(self):
-        self.is_enabled = True
         self.observer.start()
         try:
-            while self.is_enabled:
+            while self.should_stop.is_set():
                 time.sleep(1)
-        except KeyboardInterrupt:
-            self.stop()
-
-    def stop(self):
-        self.is_enabled = False
-        self.observer.stop()
+        except:
+            self.observer.stop()
         self.observer.join()
 
     def enable_watcher(self):
         if not self.is_enabled:
-            self.start()
+            self.is_enabled = True
             print("Enabled observer")
 
     def disable_watcher(self):
         if self.is_enabled:
-            self.stop()
+            self.is_enabled = False
             print("Disabled observer")
 
     def update_directory(self, directory):
-        self.dir = os.path.abspath(directory)
-        self.observer.unschedule_all()
-        self.observer.schedule(self.event_handler, self.dir, recursive=True)
-        print("Directory updated to:", self.dir)
+        if not self.is_enabled:
+            self.dir = os.path.abspath(directory)
+            print("Directory updated to:", self.dir)
 
     def kill_thread(self):
-        self.disable_watcher()
-        self.join()
+        if self.observer is not None:
+            self.observer.stop()
+            self.observer.join()
+            print("killed watchdog")
+        self.should_stop.set()
+        print("killed watcher thread")
 
     def trigger_event(self, event):
-        self.event_handler(event)
-
-    # TODO move backup logic to a new class
-    def create_backup(self):
-        backup_dir = os.path.join(self.dir, self.current_backup_dir_name)
-
-        if not os.path.exists(backup_dir):
-            try:
-                print("trying to creating backup of directory: " + self.dir)
-                shutil.copytree(self.dir, backup_dir)
-            except Exception as e:
-                print("unable to create a backup of: " + self.dir)
-                print(e)
-        else:
-            # TODO add condition for reverting after session. as well as if we are to update the backup at the end of session
-            print("backup exists at: " + backup_dir)
+        if self.is_enabled:
+            self.event_handler(event)

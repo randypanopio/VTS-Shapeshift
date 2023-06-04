@@ -1,4 +1,4 @@
-import sys, asyncio, os, json
+import sys, asyncio, os, json, threading
 from PySide6 import QtWidgets, QtCore
 
 from comms import requests
@@ -24,11 +24,15 @@ class ShapeShift:
 
         # VTS Connection
         self.vts_client = requests.VT_Requests(config_data=self.config_json_dict, new_model_handler=self.handle_new_models)
+
         # Watcher
         self.observer = watcher.Watcher(config_data=self.config_json_dict, event_handler=self.process_watcher_update)
-        # GUI
+
+        # Qt/GUI
         self.app = QtWidgets.QApplication(sys.argv)
+        self.app.aboutToQuit.connect(self.exit_application)
         self.window = Window()
+
         # vts requests gui
         self.window.connection_button.clicked.connect(self.connect_vts_ws)
         self.window.set_url_inputs(
@@ -50,17 +54,18 @@ class ShapeShift:
             self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]
         )
 
-    def kill_threads(self):
-        self.observer.kill_thread()
+    def exit_application(self):
         self.vts_client.kill_thread()
+        self.observer.kill_thread()
+        print("killed all threads, exiting")
 
-    def begin(self):
+    def open(self):
         self.window.show()
         if self.config_json_dict["cached_auth_token"]:
             self.connect_vts_ws()
         if self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]:
-            self.trigger_watcher()
-        self.app.exec()
+            self.observer.enable_watcher()
+        sys.exit(self.app.exec())
 
     def connect_vts_ws(self):
         self.loop.run_until_complete(self.vts_client.authenticate())
@@ -113,7 +118,8 @@ class ShapeShift:
         - cases of invalid might be verifying if watcher is looking at the correct dir (eg vts changed models, were not gonna set up events to listen for model changes since that really isn't the scope of this tool)
             - handle based on settings (update watcher or deactivate watcher)
         """
-        self.loop.create_task(self.vts_client.reload_current_model())
+        # self.loop.run_until_complete(self.vts_client.reload_current_model())
+        print("event triggered")
         # TODO use new_model_event to seamlessly update watcher look directory
 
     def handle_new_models(self):
@@ -122,5 +128,4 @@ class ShapeShift:
 
 if __name__ == "__main__":
     app = ShapeShift("VTS-Shapeshift/debug/debug_config.json")
-    app.begin()
-    app.kill_threads()
+    app.open()
