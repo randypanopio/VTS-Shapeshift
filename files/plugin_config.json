@@ -11,7 +11,7 @@
         "update_data_on_new_model": true,
         "backup_folders": true,
         "start_watcher_on_startup": false,
-        "model_directory": "Set your VTube Studio Model Directory!",
+        "model_directory": "",
         "ws_base_url": "ws://localhost:",
         "ws_port" : "8001"
     }

@@ -13,7 +13,6 @@ class WebSocketConnection:
 
     async def connect(self):
         self.websocket = await asyncio.wait_for(websockets.connect(self.url), 3)
-        print("created ws connect")
 
     async def close(self):
         await self.websocket.close()

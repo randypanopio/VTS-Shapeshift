@@ -8,8 +8,10 @@ from app_interface.window import Window
 
 class ShapeShift:
     def __init__(self, config_fp):
-        # create loop
+        # create loop, thread
         self.loop = asyncio.new_event_loop()
+        self.thread = threading.current_thread()
+        self.thread.name = self.thread.name + " - ShapeShift_Thread"
         asyncio.set_event_loop(self.loop)
 
         # Plugin Config, used to prepop data
@@ -54,17 +56,24 @@ class ShapeShift:
             self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]
         )
 
+        # Event trigger cooldown
+        self.cooldown = 2
+        self.is_processing_event = False
+
     def exit_application(self):
-        self.vts_client.kill_thread()
+        self.save_preferences(save_model_dir=True)
         self.observer.kill_thread()
         print("killed all threads, exiting")
 
     def open(self):
         self.window.show()
         if self.config_json_dict["cached_auth_token"]:
+            # TODO validate if vtube studio is running before running
             self.connect_vts_ws()
-        if self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]:
-            self.observer.enable_watcher()
+        on_startup = self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]
+        mdir = self.config_json_dict["plugin_settings"]["model_directory"]
+        if on_startup and mdir:
+            self.trigger_watcher()
         sys.exit(self.app.exec())
 
     def connect_vts_ws(self):
@@ -85,9 +94,10 @@ class ShapeShift:
         dir_path = QtWidgets.QFileDialog.getExistingDirectory(self.window, "Open Model Directory", "")
         self.config_json_dict["plugin_settings"]["model_directory"] = dir_path
         self.window.set_watcher_dir_input(dir_path)
+        self.observer.update_directory(dir_path)
         self.save_prefs_tofile()
 
-    def save_preferences(self, save_model_dir = False):
+    def save_preferences(self, save_model_dir = True):
         if save_model_dir:
             self.config_json_dict["plugin_settings"]["model_directory"] = self.window.directory_input.text()
         self.config_json_dict["plugin_settings"]["ws_base_url"] = self.window.url_input.text()
@@ -119,8 +129,12 @@ class ShapeShift:
             - handle based on settings (update watcher or deactivate watcher)
         """
         # self.loop.run_until_complete(self.vts_client.reload_current_model())
-        print("event triggered")
+        print("reset model")
         # TODO use new_model_event to seamlessly update watcher look directory
+
+    def rsp(self):
+        self.is_processing_event = False
+        print("im an async call me later func")
 
     def handle_new_models(self):
         print("New Model Detected")
@@ -129,3 +143,4 @@ class ShapeShift:
 if __name__ == "__main__":
     app = ShapeShift("VTS-Shapeshift/debug/debug_config.json")
     app.open()
+

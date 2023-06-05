@@ -9,7 +9,6 @@ I could go the nasty route and just have a permanent watcher subprocess in the b
 And instead of disabling the thread, just ignore trigger callbacks
 - not very performant :( - maybe a TODO revisit later way down the road
 """
-
 class Watcher(threading.Thread):
     def __init__(
             self, config_data,
@@ -32,17 +31,30 @@ class Watcher(threading.Thread):
         if trigger_on_delete: self.scheduler_event_handler.on_deleted = self.trigger_event
         if trigger_on_move: self.scheduler_event_handler.on_moved = self.trigger_event
         if trigger_on_create: self.scheduler_event_handler.on_created = self.trigger_event
-        self.observer.schedule(self.scheduler_event_handler, self.dir, recursive=True)
-        self.observer.name = "Watchdog_Thread"
+        self.observer.name = self.observer.name + " - Watchdog_Thread"
 
         self.is_enabled = False
+        self.has_started = False
+
         self.thread = threading.Thread(target=self.run)
-        self.thread.name = "Watcher_Thread"
+        self.thread.name = self.thread.name + " - Watcher_Thread"
+        self.allow_event_trigger = True
         self.should_stop = threading.Event()
-        self.thread.start()
+
+        # this buffer is how often events can get trigd. its to allow some file/io buffer time between completion of complete filestreming in that directory to roughly time files are ready to be reloaded in VTS.
+        self.event_cooldown = 2
+
+    def start_watcher(self):
+        if not self.has_started:
+            self.observer.schedule(self.scheduler_event_handler, self.dir, recursive=True)
+            self.observer.start()
+            print("enabled {} thread".format(self.observer.name))
+            if not self.thread.is_alive():
+                self.thread.start()
+                print("enabled {} thread".format(self.thread.name))
+            self.has_started = True
 
     def run(self):
-        self.observer.start()
         try:
             while self.should_stop.is_set():
                 time.sleep(1)
@@ -53,7 +65,9 @@ class Watcher(threading.Thread):
     def enable_watcher(self):
         if not self.is_enabled:
             self.is_enabled = True
-            print("Enabled observer")
+            print("Enabled observer, watching: " + self.dir)
+        if not self.has_started:
+            self.start_watcher()
 
     def disable_watcher(self):
         if self.is_enabled:
@@ -62,17 +76,35 @@ class Watcher(threading.Thread):
 
     def update_directory(self, directory):
         if not self.is_enabled:
-            self.dir = os.path.abspath(directory)
+            self.dir =  os.path.abspath(directory)
+            self.observer.unschedule_all()
+            self.observer.schedule(self.scheduler_event_handler, self.dir, recursive=True)
             print("Directory updated to:", self.dir)
 
     def kill_thread(self):
-        if self.observer is not None:
+        if self.observer is not None and self.observer.is_alive():
             self.observer.stop()
             self.observer.join()
             print("killed watchdog")
         self.should_stop.set()
+        if self.thread.is_alive(): self.thread.join()
         print("killed watcher thread")
 
     def trigger_event(self, event):
         if self.is_enabled:
-            self.event_handler(event)
+            if self.allow_event_trigger:
+                print("correct event")
+                self.event_handler(event)
+                self.allow_event_trigger = False
+                self.start_cooldown()
+            else:
+                print("rejected event")
+
+    def start_cooldown(self):
+        # technically all the events' thread are cleaned up by the interpreter.
+        # But could also create a new single thread and handle itself or smn
+        threading.Thread(target=self.reset_event).start()
+
+    def reset_event(self):
+        time.sleep(self.event_cooldown)
+        self.allow_event_trigger = True
