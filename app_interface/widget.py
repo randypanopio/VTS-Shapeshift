@@ -25,7 +25,7 @@ class Ui_Form(object):
         if not Form.objectName():
             Form.setObjectName(u"Form")
         Form.setEnabled(True)
-        Form.resize(781, 375)
+        Form.resize(781, 401)
         font = QFont()
         font.setFamilies([u"Open Sans"])
         font.setPointSize(10)
@@ -217,6 +217,12 @@ class Ui_Form(object):
 
         self.horizontalLayout_13.addLayout(self.horizontalLayout_9)
 
+        self.watcher_secondary_label = QLabel(Form)
+        self.watcher_secondary_label.setObjectName(u"watcher_secondary_label")
+        self.watcher_secondary_label.setStyleSheet(u"font-size: 20px; color:#FFBD69")
+
+        self.horizontalLayout_13.addWidget(self.watcher_secondary_label)
+
         self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.horizontalLayout_13.addItem(self.horizontalSpacer_2)
@@ -314,20 +320,26 @@ class Ui_Form(object):
 
         self.verticalLayout_4.addLayout(self.horizontalLayout_3)
 
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.startup_connect_checkbox = QCheckBox(Form)
+        self.startup_connect_checkbox.setObjectName(u"startup_connect_checkbox")
+        self.startup_connect_checkbox.setChecked(True)
+
+        self.horizontalLayout_2.addWidget(self.startup_connect_checkbox)
+
+        self.run_watcher_checkbox = QCheckBox(Form)
+        self.run_watcher_checkbox.setObjectName(u"run_watcher_checkbox")
+
+        self.horizontalLayout_2.addWidget(self.run_watcher_checkbox)
+
+        self.horizontalLayout_2.setStretch(0, 1)
+        self.horizontalLayout_2.setStretch(1, 1)
+
+        self.verticalLayout_4.addLayout(self.horizontalLayout_2)
+
         self.horizontalLayout_12 = QHBoxLayout()
         self.horizontalLayout_12.setObjectName(u"horizontalLayout_12")
-        self.model_reload_checkbox = QCheckBox(Form)
-        self.model_reload_checkbox.setObjectName(u"model_reload_checkbox")
-        self.model_reload_checkbox.setChecked(True)
-
-        self.horizontalLayout_12.addWidget(self.model_reload_checkbox)
-
-        self.update_data_checkbox = QCheckBox(Form)
-        self.update_data_checkbox.setObjectName(u"update_data_checkbox")
-        self.update_data_checkbox.setChecked(True)
-
-        self.horizontalLayout_12.addWidget(self.update_data_checkbox)
-
         self.backup_checkbox = QCheckBox(Form)
         self.backup_checkbox.setObjectName(u"backup_checkbox")
         self.backup_checkbox.setEnabled(True)
@@ -341,13 +353,25 @@ class Ui_Form(object):
 
         self.horizontalLayout_12.addWidget(self.backup_checkbox)
 
-        self.run_watcher_checkbox = QCheckBox(Form)
-        self.run_watcher_checkbox.setObjectName(u"run_watcher_checkbox")
+        self.restore_file_checkbox = QCheckBox(Form)
+        self.restore_file_checkbox.setObjectName(u"restore_file_checkbox")
 
-        self.horizontalLayout_12.addWidget(self.run_watcher_checkbox)
+        self.horizontalLayout_12.addWidget(self.restore_file_checkbox)
 
-        self.horizontalLayout_12.setStretch(0, 2)
-        self.horizontalLayout_12.setStretch(1, 2)
+        self.update_data_checkbox = QCheckBox(Form)
+        self.update_data_checkbox.setObjectName(u"update_data_checkbox")
+        self.update_data_checkbox.setChecked(True)
+
+        self.horizontalLayout_12.addWidget(self.update_data_checkbox)
+
+        self.model_reload_checkbox = QCheckBox(Form)
+        self.model_reload_checkbox.setObjectName(u"model_reload_checkbox")
+        self.model_reload_checkbox.setChecked(True)
+
+        self.horizontalLayout_12.addWidget(self.model_reload_checkbox)
+
+        self.horizontalLayout_12.setStretch(0, 1)
+        self.horizontalLayout_12.setStretch(1, 1)
         self.horizontalLayout_12.setStretch(2, 1)
         self.horizontalLayout_12.setStretch(3, 1)
 
@@ -441,17 +465,20 @@ class Ui_Form(object):
         self.label_13.setText(QCoreApplication.translate("Form", u"Watcher Status", None))
         self.label_14.setText(QCoreApplication.translate("Form", u"  |  ", None))
         self.watcher_status_label.setText(QCoreApplication.translate("Form", u"Disabled", None))
+        self.watcher_secondary_label.setText(QCoreApplication.translate("Form", u"Secondary", None))
         self.watcher_button.setText(QCoreApplication.translate("Form", u"Enable", None))
-        self.label_16.setText(QCoreApplication.translate("Form", u"Set the folder directory that VTube Studio is using, and where live changes are saved.", None))
+        self.label_16.setText(QCoreApplication.translate("Form", u"Set the folder path the current model loaded in VTube Studio and where live changes are being tracked.", None))
         self.label_17.setText(QCoreApplication.translate("Form", u"Model Directory: ", None))
         self.directory_input.setText(QCoreApplication.translate("Form", u"Set your VTube Studio Model Directory!", None))
         self.browse_button.setText(QCoreApplication.translate("Form", u"Browse", None))
         self.label_23.setText(QCoreApplication.translate("Form", u"Shapeshift Plugin Preferences", None))
         self.save_pref_button.setText(QCoreApplication.translate("Form", u"Save Preferences (Requires Restart)", None))
-        self.model_reload_checkbox.setText(QCoreApplication.translate("Form", u"Auto Attempt Model Reloads", None))
-        self.update_data_checkbox.setText(QCoreApplication.translate("Form", u"Update Data on new Model", None))
-        self.backup_checkbox.setText(QCoreApplication.translate("Form", u"Create Backup Folder", None))
+        self.startup_connect_checkbox.setText(QCoreApplication.translate("Form", u"Connect to VTube Studio on Startup", None))
         self.run_watcher_checkbox.setText(QCoreApplication.translate("Form", u"Enable Watcher on Startup", None))
+        self.backup_checkbox.setText(QCoreApplication.translate("Form", u"Create Backup Folder", None))
+        self.restore_file_checkbox.setText(QCoreApplication.translate("Form", u"Restore Files after Session", None))
+        self.update_data_checkbox.setText(QCoreApplication.translate("Form", u"Update Data on new Model", None))
+        self.model_reload_checkbox.setText(QCoreApplication.translate("Form", u"Attempt Reloads", None))
         self.github_button.setText(QCoreApplication.translate("Form", u"Support @ GitHub", None))
         self.twitter_button.setText(QCoreApplication.translate("Form", u"Contact @ Twitter", None))
     # retranslateUi

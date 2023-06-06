@@ -8,7 +8,7 @@ from app_interface.window import Window
 
 class ShapeShift:
     def __init__(self, config_fp):
-        # create loop, thread
+        # Threading
         self.loop = asyncio.new_event_loop()
         self.thread = threading.current_thread()
         self.thread.name = self.thread.name + " - ShapeShift_Thread"
@@ -49,16 +49,13 @@ class ShapeShift:
         self.window.set_watcher_status(self.observer.is_enabled)
         # remaining gui
         self.window.save_pref_button.clicked.connect(self.save_preferences)
-        self.window.set_prefs_checkboxes(
-            self.config_json_dict["plugin_settings"]["reload_model_on_fail"],
-            self.config_json_dict["plugin_settings"]["update_data_on_new_model"],
-            self.config_json_dict["plugin_settings"]["backup_folders"],
-            self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]
-        )
+        self.window.model_reload_checkbox.setChecked(self.config_json_dict["plugin_settings"]["reload_model_on_fail"])
+        self.window.update_data_checkbox.setChecked(self.config_json_dict["plugin_settings"]["update_data_on_new_model"])
+        self.window.backup_checkbox.setChecked(self.config_json_dict["plugin_settings"]["backup_folders"])
+        self.window.restore_file_checkbox.setChecked(self.config_json_dict["plugin_settings"]["restore_files_after_session"])
+        self.window.run_watcher_checkbox.setChecked(self.config_json_dict["plugin_settings"]["start_watcher_on_startup"])
+        self.window.startup_connect_checkbox.setChecked(self.config_json_dict["plugin_settings"]["connect_on_startup"])
 
-        # Event trigger cooldown
-        self.cooldown = 2
-        self.is_processing_event = False
 
     def exit_application(self):
         self.save_preferences(save_model_dir=True)
@@ -79,6 +76,7 @@ class ShapeShift:
     def connect_vts_ws(self):
         self.loop.run_until_complete(self.vts_client.authenticate())
         self.window.set_plugin_status(self.vts_client.connected)
+        # TODO pull deets from ui
         self.config_json_dict["cached_auth_token"] = self.vts_client.auth_token
         self.save_prefs_tofile()
 
@@ -86,16 +84,24 @@ class ShapeShift:
         if self.observer.is_enabled:
             self.observer.disable_watcher()
         else:
-            self.observer.enable_watcher()
+            dir_path = self.window.directory_input.text()
+            if not self.observer.dir == dir_path:
+                self.config_json_dict["plugin_settings"]["model_directory"] = dir_path
+                self.observer.update_directory(dir_path)
+                self.observer.enable_watcher()
+            else:
+                self.observer.enable_watcher()
         self.window.set_watcher_status(self.observer.is_enabled)
 
     # region remaining Slots
     def browse_button(self):
         dir_path = QtWidgets.QFileDialog.getExistingDirectory(self.window, "Open Model Directory", "")
-        self.config_json_dict["plugin_settings"]["model_directory"] = dir_path
-        self.window.set_watcher_dir_input(dir_path)
-        self.observer.update_directory(dir_path)
-        self.save_prefs_tofile()
+        if dir_path:
+            self.config_json_dict["plugin_settings"]["model_directory"] = dir_path
+            self.window.set_watcher_dir_input(dir_path)
+            self.observer.update_directory(dir_path)
+            self.window.watcher_secondary_label.setText("")
+            self.save_prefs_tofile()
 
     def save_preferences(self, save_model_dir = True):
         if save_model_dir:
@@ -105,7 +111,9 @@ class ShapeShift:
         self.config_json_dict["plugin_settings"]["reload_model_on_fail"] = self.window.model_reload_checkbox.isChecked()
         self.config_json_dict["plugin_settings"]["update_data_on_new_model"] = self.window.update_data_checkbox.isChecked()
         self.config_json_dict["plugin_settings"]["backup_folders"] = self.window.backup_checkbox.isChecked()
+        self.config_json_dict["plugin_settings"]["restore_files_after_session"] = self.window.restore_file_checkbox.isChecked()
         self.config_json_dict["plugin_settings"]["start_watcher_on_startup"] = self.window.run_watcher_checkbox.isChecked()
+        self.config_json_dict["plugin_settings"]["connect_on_startup"] = self.window.startup_connect_checkbox.isChecked()
         self.save_prefs_tofile()
 
     # endregion
@@ -128,17 +136,14 @@ class ShapeShift:
         - cases of invalid might be verifying if watcher is looking at the correct dir (eg vts changed models, were not gonna set up events to listen for model changes since that really isn't the scope of this tool)
             - handle based on settings (update watcher or deactivate watcher)
         """
-        # self.loop.run_until_complete(self.vts_client.reload_current_model())
-        print("reset model")
+        self.loop.run_until_complete(self.vts_client.reload_current_model())
         # TODO use new_model_event to seamlessly update watcher look directory
 
-    def rsp(self):
-        self.is_processing_event = False
-        print("im an async call me later func")
-
     def handle_new_models(self):
-        print("New Model Detected")
-        pass
+        # for now disable watcher, maybe later feature is automatically swapping to the new models dir. Maybe for V2
+        self.window.watcher_secondary_label.setText("new model detected!")
+        self.observer.disable_watcher()
+        self.window.set_watcher_status(self.observer.is_enabled)
 
 if __name__ == "__main__":
     app = ShapeShift("VTS-Shapeshift/debug/debug_config.json")

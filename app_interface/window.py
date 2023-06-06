@@ -20,6 +20,7 @@ class Window(QWidget, Ui_Form):
         self.setWindowIcon(QIcon("VTS-Shapeshift/files/images/icon.png"))
         self.twitter_button.clicked.connect(self.twitter_link)
         self.github_button.clicked.connect(self.github_link)
+        self.watcher_secondary_label.setText("")
 
     def set_url_inputs(self, base_url = "", port = ""):
         self.url_input.setText(base_url)
@@ -46,12 +47,6 @@ class Window(QWidget, Ui_Form):
 
     def set_watcher_dir_input(self, text = ""):
         self.directory_input.setText(text)
-
-    def set_prefs_checkboxes(self, model_reload, update_data, backup, watcher):
-        self.model_reload_checkbox.setChecked(model_reload)
-        self.update_data_checkbox.setChecked(update_data)
-        self.backup_checkbox.setChecked(backup)
-        self.run_watcher_checkbox.setChecked(watcher)
 
     def twitter_link(self):
         links.open_url_browser("https://twitter.com/randypanopio")

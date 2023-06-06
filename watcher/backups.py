@@ -24,3 +24,5 @@ def create_backup(self):
     else:
         # TODO add condition for reverting after session. as well as if we are to update the backup at the end of session
         print("backup exists at: " + backup_dir)
+
+#confgi settings - reset_post_session

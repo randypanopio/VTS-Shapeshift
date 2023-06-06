@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>781</width>
-    <height>375</height>
+    <height>401</height>
    </rect>
   </property>
   <property name="font">
@@ -285,6 +285,16 @@ height: 42px;</string>
         </layout>
        </item>
        <item>
+        <widget class="QLabel" name="watcher_secondary_label">
+         <property name="styleSheet">
+          <string notr="true">font-size: 20px; color:#FFBD69</string>
+         </property>
+         <property name="text">
+          <string>Secondary</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="horizontalSpacer_2">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -341,7 +351,7 @@ height: 42px;</string>
           <string notr="true"/>
          </property>
          <property name="text">
-          <string>Set the folder directory that VTube Studio is using, and where live changes are saved.</string>
+          <string>Set the folder path the current model loaded in VTube Studio and where live changes are being tracked.</string>
          </property>
         </widget>
        </item>
@@ -439,11 +449,11 @@ height: 42px;</string>
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_12" stretch="2,2,1,1">
+        <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,1">
          <item>
-          <widget class="QCheckBox" name="model_reload_checkbox">
+          <widget class="QCheckBox" name="startup_connect_checkbox">
            <property name="text">
-            <string>Auto Attempt Model Reloads</string>
+            <string>Connect to VTube Studio on Startup</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -451,15 +461,16 @@ height: 42px;</string>
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="update_data_checkbox">
+          <widget class="QCheckBox" name="run_watcher_checkbox">
            <property name="text">
-            <string>Update Data on new Model</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
+            <string>Enable Watcher on Startup</string>
            </property>
           </widget>
          </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_12" stretch="1,1,1,1">
          <item>
           <widget class="QCheckBox" name="backup_checkbox">
            <property name="enabled">
@@ -483,9 +494,29 @@ height: 42px;</string>
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="run_watcher_checkbox">
+          <widget class="QCheckBox" name="restore_file_checkbox">
            <property name="text">
-            <string>Enable Watcher on Startup</string>
+            <string>Restore Files after Session</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="update_data_checkbox">
+           <property name="text">
+            <string>Update Data on new Model</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="model_reload_checkbox">
+           <property name="text">
+            <string>Attempt Reloads</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
