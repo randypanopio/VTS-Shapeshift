@@ -52,6 +52,7 @@ class VT_Requests():
         asyncio.set_event_loop(self.loop)
 
         # connect ws
+        # TODO bug fix when vts is still closed and need to connect manually
         self.websocket = websocket.WebSocketConnection(self.url)
         self.loop.create_task(self.websocket.connect())
 
@@ -100,8 +101,12 @@ class VT_Requests():
         print("$$ {} request message:\n{}".format(type, msg))
         await self.websocket.send(msg)
         response = await self.websocket.receive()
-        print("$$ {} response:\n{}".format(type, response))
-        return json.loads(response)
+        if response:
+            print("$$ {} response:\n{}".format(type, response))
+            return json.loads(response)
+        else:
+            print("Unable to talk to VTS, app likely offline")
+            return
 
     async def _get_auth_token(self):
         type = "AuthenticationTokenRequest"
@@ -125,6 +130,9 @@ class VT_Requests():
 
     async def authenticate(self):
         status = await self.check_status()
+        if not status:
+            self.connected = False
+            return False
         if "data" in status:
             if status["data"]["currentSessionAuthenticated"] is True:
                 self.connected = True
@@ -132,6 +140,7 @@ class VT_Requests():
                 return True
             else:
                 self.connected = False
+
         if not self.auth_token:
             await self._get_auth_token()
         type = "AuthenticationRequest"

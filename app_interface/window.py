@@ -53,3 +53,14 @@ class Window(QWidget, Ui_Form):
 
     def github_link(self):
         links.open_url_browser("https://github.com/randypanopio/VTS-Shapeshift")
+
+
+"""
+TODO add these tooltips:
+
+backup:
+Creates a copy of the model folder, and can be used to revert after session, or just for sanity sake. Creates the backup when the watcher is first enabled.
+
+restore:
+Restores the model folder to the original files after the application has been closed. Requires the backup setting to be enabled. If the backup folder is deleted for any reason, shapeshift will keep the existing folder structure alone.
+"""

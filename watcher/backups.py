@@ -1,28 +1,58 @@
-import os, shutil, sys, time, string, threading, logging
-from watchdog.observers import Observer
+import os, shutil
+from pathlib import Path
 from m_utils import log as logging
-from watchdog.events import LoggingEventHandler, PatternMatchingEventHandler
 
+backup_affix = "_VTS_Shapeshift_Backup"
 
-"""
-    create a backup for current session. on new sess, check if backup exists, if not create backup
-    if backup folder exists, compare if backup matches latest files, if not matching, create new backup?
-"""
-current_backup_dir_name = ".current_watcher_backup"
-previous_session_backup_name = ".previous_watcher_backup"
-
-def create_backup(self):
-    backup_dir = os.path.join(self.dir, self.current_backup_dir_name)
-
+def create_backup(dir):
+    backup_dir = dir + backup_affix
     if not os.path.exists(backup_dir):
         try:
-            print("trying to creating backup of directory: " + self.dir)
-            shutil.copytree(self.dir, backup_dir)
+            shutil.copytree(dir, backup_dir)
+            print("backup created at: " + backup_dir)
         except Exception as e:
-            print("unable to create a backup of: " + self.dir)
+            print("unable to create a backup of: " + dir)
             print(e)
     else:
-        # TODO add condition for reverting after session. as well as if we are to update the backup at the end of session
-        print("backup exists at: " + backup_dir)
+        print("removing existing backup at: " + backup_dir + "\ncreating a new backup for this session")
+        shutil.rmtree(backup_dir)
+        create_backup(dir)
+    return backup_dir
 
-#confgi settings - reset_post_session
+def restore_from_backup(backup, to_replace):
+    """
+        this function will automatically delete the backup folder upon succeeding
+    """
+    backup = os.path.abspath(backup)
+    to_replace = os.path.abspath(to_replace)
+    source = Path(backup)
+    target = Path(to_replace)
+
+    if backup == to_replace:
+        print("Passed target and backup as the same path")
+        return False
+
+    if backup in target.parents:
+        print("Backup is contained within the passed target")
+        # I mean we could handle this but nah
+        return False
+
+    # check if backup is in same root dir, can just delete target, rename backup
+    if source.parents[0] == target.parents[0]:
+        try:
+            shutil.rmtree(to_replace)
+            os.rename(backup, to_replace)
+            return True
+        except Exception as e:
+            print(e)
+            return False
+    else:
+        try:
+            shutil.rmtree(to_replace)
+            shutil.copytree(backup, to_replace)
+            shutil.rmtree(backup)
+            return True
+        except Exception as e:
+            print(e)
+            return False
+    return False
