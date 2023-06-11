@@ -63,6 +63,8 @@ class Watcher(threading.Thread):
         self.observer.join()
 
     def enable_watcher(self):
+        if not self.dir:
+            return
         if not self.is_enabled:
             self.is_enabled = True
             print("Enabled observer, watching: " + self.dir)

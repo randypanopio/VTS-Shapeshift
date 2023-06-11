@@ -25,7 +25,7 @@ class Ui_Form(object):
         if not Form.objectName():
             Form.setObjectName(u"Form")
         Form.setEnabled(True)
-        Form.resize(781, 401)
+        Form.resize(781, 436)
         font = QFont()
         font.setFamilies([u"Open Sans"])
         font.setPointSize(10)
@@ -320,6 +320,36 @@ class Ui_Form(object):
 
         self.verticalLayout_4.addLayout(self.horizontalLayout_3)
 
+        self.horizontalLayout_4 = QHBoxLayout()
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.wd_on_create_checkbox = QCheckBox(Form)
+        self.wd_on_create_checkbox.setObjectName(u"wd_on_create_checkbox")
+        self.wd_on_create_checkbox.setChecked(True)
+
+        self.horizontalLayout_4.addWidget(self.wd_on_create_checkbox)
+
+        self.wd_on_delete_checkbox = QCheckBox(Form)
+        self.wd_on_delete_checkbox.setObjectName(u"wd_on_delete_checkbox")
+        self.wd_on_delete_checkbox.setChecked(True)
+
+        self.horizontalLayout_4.addWidget(self.wd_on_delete_checkbox)
+
+        self.wd_on_move_checkbox = QCheckBox(Form)
+        self.wd_on_move_checkbox.setObjectName(u"wd_on_move_checkbox")
+        self.wd_on_move_checkbox.setChecked(True)
+
+        self.horizontalLayout_4.addWidget(self.wd_on_move_checkbox)
+
+
+        self.verticalLayout_4.addLayout(self.horizontalLayout_4)
+
+        self.line_4 = QFrame(Form)
+        self.line_4.setObjectName(u"line_4")
+        self.line_4.setFrameShape(QFrame.HLine)
+        self.line_4.setFrameShadow(QFrame.Sunken)
+
+        self.verticalLayout_4.addWidget(self.line_4)
+
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.startup_connect_checkbox = QCheckBox(Form)
@@ -360,6 +390,7 @@ class Ui_Form(object):
 
         self.update_data_checkbox = QCheckBox(Form)
         self.update_data_checkbox.setObjectName(u"update_data_checkbox")
+        self.update_data_checkbox.setEnabled(True)
         self.update_data_checkbox.setChecked(True)
 
         self.horizontalLayout_12.addWidget(self.update_data_checkbox)
@@ -473,6 +504,9 @@ class Ui_Form(object):
         self.browse_button.setText(QCoreApplication.translate("Form", u"Browse", None))
         self.label_23.setText(QCoreApplication.translate("Form", u"Shapeshift Plugin Preferences", None))
         self.save_pref_button.setText(QCoreApplication.translate("Form", u"Save Preferences (Requires Restart)", None))
+        self.wd_on_create_checkbox.setText(QCoreApplication.translate("Form", u"Detect New Files", None))
+        self.wd_on_delete_checkbox.setText(QCoreApplication.translate("Form", u"Detect File Deletions", None))
+        self.wd_on_move_checkbox.setText(QCoreApplication.translate("Form", u"Detect File Moved", None))
         self.startup_connect_checkbox.setText(QCoreApplication.translate("Form", u"Connect to VTube Studio on Startup", None))
         self.run_watcher_checkbox.setText(QCoreApplication.translate("Form", u"Enable Watcher on Startup", None))
         self.backup_checkbox.setText(QCoreApplication.translate("Form", u"Create Backup Folder", None))

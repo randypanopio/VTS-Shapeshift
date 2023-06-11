@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>781</width>
-    <height>401</height>
+    <height>436</height>
    </rect>
   </property>
   <property name="font">
@@ -449,6 +449,47 @@ height: 42px;</string>
         </layout>
        </item>
        <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QCheckBox" name="wd_on_create_checkbox">
+           <property name="text">
+            <string>Detect New Files</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="wd_on_delete_checkbox">
+           <property name="text">
+            <string>Detect File Deletions</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="wd_on_move_checkbox">
+           <property name="text">
+            <string>Detect File Moved</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="Line" name="line_4">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,1">
          <item>
           <widget class="QCheckBox" name="startup_connect_checkbox">
@@ -502,6 +543,9 @@ height: 42px;</string>
          </item>
          <item>
           <widget class="QCheckBox" name="update_data_checkbox">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
            <property name="text">
             <string>Update Data on new Model</string>
            </property>

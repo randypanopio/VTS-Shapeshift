@@ -2,7 +2,7 @@ import sys, asyncio, os, json, threading
 from PySide6 import QtWidgets, QtCore
 
 from comms import requests
-from watcher import watcher
+from watcher import watcher, backups
 from m_utils import log as logging
 from app_interface.window import Window
 
@@ -28,7 +28,12 @@ class ShapeShift:
         self.vts_client = requests.VT_Requests(config_data=self.config_json_dict, new_model_handler=self.handle_new_models)
 
         # Watcher
-        self.observer = watcher.Watcher(config_data=self.config_json_dict, event_handler=self.process_watcher_update)
+        self.observer = watcher.Watcher(
+            config_data = self.config_json_dict,
+            event_handler = self.process_watcher_update,
+            trigger_on_create = self.config_json_dict["plugin_settings"]["wd_on_create"],
+            trigger_on_move = self.config_json_dict["plugin_settings"]["wd_on_move"],
+            trigger_on_delete = self.config_json_dict["plugin_settings"]["wd_on_delete"])
 
         # Qt/GUI
         self.app = QtWidgets.QApplication(sys.argv)
@@ -55,6 +60,9 @@ class ShapeShift:
         self.window.restore_file_checkbox.setChecked(self.config_json_dict["plugin_settings"]["restore_files_after_session"])
         self.window.run_watcher_checkbox.setChecked(self.config_json_dict["plugin_settings"]["start_watcher_on_startup"])
         self.window.startup_connect_checkbox.setChecked(self.config_json_dict["plugin_settings"]["connect_on_startup"])
+        self.window.wd_on_create_checkbox.setChecked(self.config_json_dict["plugin_settings"]["wd_on_create"])
+        self.window.wd_on_move_checkbox.setChecked(self.config_json_dict["plugin_settings"]["wd_on_move"])
+        self.window.wd_on_delete_checkbox.setChecked(self.config_json_dict["plugin_settings"]["wd_on_delete"])
 
 
     def exit_application(self):
@@ -64,19 +72,26 @@ class ShapeShift:
 
     def open(self):
         self.window.show()
-        if self.config_json_dict["cached_auth_token"]:
-            # TODO validate if vtube studio is running before running
+
+        if self.config_json_dict["plugin_settings"]["backup_folders"] and self.config_json_dict["plugin_settings"]["model_directory"]:
+            backups.create_backup(self.config_json_dict["plugin_settings"]["model_directory"])
+
+        vts_open = False
+        # TODO check if vtube studio is running before running, since
+
+        if self.config_json_dict["cached_auth_token"] and vts_open:
             self.connect_vts_ws()
+
         on_startup = self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]
         mdir = self.config_json_dict["plugin_settings"]["model_directory"]
-        if on_startup and mdir:
+        if on_startup and mdir and vts_open:
             self.trigger_watcher()
+
         sys.exit(self.app.exec())
 
     def connect_vts_ws(self):
         self.loop.run_until_complete(self.vts_client.authenticate())
         self.window.set_plugin_status(self.vts_client.connected)
-        # TODO pull deets from ui
         self.config_json_dict["cached_auth_token"] = self.vts_client.auth_token
         self.save_prefs_tofile()
 
@@ -101,6 +116,8 @@ class ShapeShift:
             self.window.set_watcher_dir_input(dir_path)
             self.observer.update_directory(dir_path)
             self.window.watcher_secondary_label.setText("")
+            if self.config_json_dict["plugin_settings"]["backup_folders"]:
+                backups.create_backup(dir_path)
             self.save_prefs_tofile()
 
     def save_preferences(self, save_model_dir = True):
@@ -114,15 +131,17 @@ class ShapeShift:
         self.config_json_dict["plugin_settings"]["restore_files_after_session"] = self.window.restore_file_checkbox.isChecked()
         self.config_json_dict["plugin_settings"]["start_watcher_on_startup"] = self.window.run_watcher_checkbox.isChecked()
         self.config_json_dict["plugin_settings"]["connect_on_startup"] = self.window.startup_connect_checkbox.isChecked()
+        self.config_json_dict["plugin_settings"]["wd_on_create"] = self.window.wd_on_create_checkbox.isChecked()
+        self.config_json_dict["plugin_settings"]["wd_on_move"] = self.window.wd_on_move_checkbox.isChecked()
+        self.config_json_dict["plugin_settings"]["wd_on_delete"] = self.window.wd_on_delete_checkbox.isChecked()
         self.save_prefs_tofile()
-
     # endregion
 
-    # TODO rewrite as async
     def save_prefs_tofile(self):
         with open(self.config_fp, "w") as file_handler:
             try:
                 file_handler.write(json.dumps(self.config_json_dict))
+                print("prefs saved at: " + self.config_fp)
             except Exception as e:
                     print(e)
 
@@ -133,14 +152,11 @@ class ShapeShift:
         - validate requests and send to ws requests
             - check if vts connection is still valid, reconnect plugin if thats not the case
             - update ui for current plugin status (in cases where reload model isn't running despite the request)
-        - cases of invalid might be verifying if watcher is looking at the correct dir (eg vts changed models, were not gonna set up events to listen for model changes since that really isn't the scope of this tool)
-            - handle based on settings (update watcher or deactivate watcher)
         """
         self.loop.run_until_complete(self.vts_client.reload_current_model())
-        # TODO use new_model_event to seamlessly update watcher look directory
 
     def handle_new_models(self):
-        # for now disable watcher, maybe later feature is automatically swapping to the new models dir. Maybe for V2
+        # for now disable watcher, maybe later feature is automatically swapping to the new models dir, actually take advantage of update_data_on_new_model. Maybe for V2
         self.window.watcher_secondary_label.setText("new model detected!")
         self.observer.disable_watcher()
         self.window.set_watcher_status(self.observer.is_enabled)
@@ -148,4 +164,3 @@ class ShapeShift:
 if __name__ == "__main__":
     app = ShapeShift("VTS-Shapeshift/debug/debug_config.json")
     app.open()
-

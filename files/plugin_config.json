@@ -15,6 +15,9 @@
         "start_watcher_on_startup": false,
         "model_directory": "",
         "ws_base_url": "ws://localhost:",
-        "ws_port" : "8001"
+        "ws_port" : "8001",
+        "wd_on_create" : true,
+        "wd_on_move" : true,
+        "wd_on_delete" : true
     }
 }
