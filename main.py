@@ -19,10 +19,11 @@ class ShapeShift:
         if os.path.isfile(self.config_fp):
             with open(config_fp) as file_handler:
                 try:
+                    # TODO config file might be an easy way to debug. add a default config generator when the file has been deleted
                     self.config_json_dict = json.loads(file_handler.read())
                 except Exception as e:
                     print(e)
-        # Maybe TODO, split out config and only pass necessary data rather than the whole thing, probably not tho
+        # Maybe TODO, split out config and only pass necessary data rather than the whole thing, probably won't because while the actual settings might be obfuscated within the code, it should remain relatively small, and generally be used across all the application
 
         # VTS Connection
         self.vts_client = requests.VT_Requests(config_data=self.config_json_dict, new_model_handler=self.handle_new_models)
@@ -84,8 +85,9 @@ class ShapeShift:
     def open(self):
         self.window.show()
 
-        vts_open = False
-        # TODO check if vtube studio is running before running, probably use ws connect to do this
+        # TODO need to ensure that vts IS available AND somehow awaited that vts_client was able to finish its connect task :thonk_emoji:
+        vts_open = False if self.vts_client.websocket.websocket is None else True
+        vts_open = self.vts_client.connected
 
         if self.config_json_dict["cached_auth_token"] and vts_open:
             self.connect_vts_ws()
@@ -179,5 +181,5 @@ class ShapeShift:
         self.window.set_watcher_status(self.observer.is_enabled)
 
 if __name__ == "__main__":
-    app = ShapeShift("VTS-Shapeshift/debug/debug_config.json")
+    app = ShapeShift("VTS-Shapeshift/file/plugin_config.json")
     app.open()
