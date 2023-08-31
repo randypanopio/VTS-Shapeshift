@@ -29,17 +29,18 @@ NOTE: This plugin is currently in development, if you would like to have an earl
 ### ii. Settings
 ![app](./files/images/app.png)
    1. Plugin Connection Settings
-	i. URL - websocket url connection.
-	ii. Port - Default VTube Studio Port
+      * i. URL - websocket url connection.
+      * ii. Port - Default VTube Studio Port
    2. Watcher Settings
-	i. Model Directory - Folder path of your active VTube Model. Highly recommended you pass in the directory of the top level folder of your model. The plugin will only keep track of files changed in that folder, but will also keep track of your live model.
+      * i. Model Directory - Folder path of your active VTube Model. Highly recommended you pass in the directory of the top level folder of your model. The plugin will only keep track of files changed in that folder, but will also keep track of your live model.
    3. File Change Preferences
 The plugin can track different changes, it will track file changes, but can be extended to also detect new files, deleted files, and moved files (including renames).
    4. Plugin Preferences
-	i. Connect to Vtube Studio on Startup - automatically connects the plugin to Vtube Studio, you will need to have authenticated the plugin at least once, and must have Vtube Studio open to use this setting.
-	ii. Enable Watcher on Startup - automatically “enable” the watcher as soon as the application connects to Vtube Studio. It will use the last passed model directory to watch.
-	iii. Create Backup folder - Creates a copy of the passed model directory upon launch of the plugin. It will keep a copy of the model before the session. It does NOT maintain copies of your original model if it was modified during a previous session, it will only keep track of your LAST session (Highly recommended you enable)
-	iv. Restore Files after Session - Reverts the model to the original files during the session. Must have “Create Backup folder” enabled
-	v. Update Data on new Model - Automatically updates the plugin with the new model. However it CANNOT automatically change directories to maintain privacy access granted by the application. You MUST change the directory manually.
-	vi. Attempt Reloads - Allow the application to continue to attempt talking to VTube Studio when it fails to communicate. * It will only attempt to a reasonable limit before completely stopping.
+      * i. Connect to Vtube Studio on Startup - automatically connects the plugin to Vtube Studio, you will need to have authenticated the plugin at least once, and must have Vtube Studio open to use this setting.
+      * ii. Enable Watcher on Startup - automatically “enable” the watcher as soon as the application connects to Vtube Studio. It will use the last passed model directory to watch.
+      * iii. Create Backup folder - Creates a copy of the passed model directory upon launch of the plugin. It will keep a copy of the model before the session. It does NOT maintain copies of your original model if it was modified during a previous session, it will only keep track of your LAST session (Highly recommended you enable)
+      * iv. Restore Files after Session - Reverts the model to the original files during the session. Must have “Create Backup folder” enabled
+      * v. Update Data on new Model - Automatically updates the plugin with the new model. However it CANNOT automatically change directories to maintain privacy access granted by the application. You MUST change the directory manually.
+      * vi. Attempt Reloads - Allow the application to continue to attempt talking to VTube Studio when it fails to communicate. * It will only attempt to a reasonable limit before completely stopping.
+
       * Plugin settings are stored locally in a “plugin_config.json” file.
