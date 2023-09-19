@@ -23,7 +23,7 @@ class VT_Requests():
                 "apiName": "VTubeStudioPublicAPI",
                 "apiVersion": "1.0",
                 "pluginName": "VTS-Shapeshift",
-                "pluginDeveloper": "RandyLmao - Randy P"}
+                "pluginDeveloper": "Roslin - Randy P"}
 
         if config_data["cached_auth_token"]:
             self.auth_token = config_data["cached_auth_token"]
@@ -51,8 +51,7 @@ class VT_Requests():
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 
-        # connect ws
-        # TODO bug fix when vts is still closed and need to connect manually
+    async def connect_websocket(self):
         self.websocket = websocket.WebSocketConnection(self.url)
         self.loop.create_task(self.websocket.connect())
 

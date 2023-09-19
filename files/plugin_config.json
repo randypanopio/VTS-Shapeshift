@@ -3,11 +3,11 @@
         "apiName": "VTubeStudioPublicAPI",
         "apiVersion": "1.0",
         "pluginName": "VTS-Shapeshift",
-        "pluginDeveloper": "RandyLmao - Randy P"
+        "pluginDeveloper": "Roslin - Randy P"
     },
     "cached_auth_token": "",
     "plugin_settings": {
-        "connect_on_startup": true,
+        "connect_on_startup": false,
         "reload_model_on_fail": true,
         "update_data_on_new_model": true,
         "backup_folders": true,

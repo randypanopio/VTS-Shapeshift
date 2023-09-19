@@ -1,4 +1,4 @@
-import sys, asyncio, os, json, threading
+import sys, asyncio, os, json, threading, time
 from PySide6 import QtWidgets, QtCore
 
 from comms import requests
@@ -84,19 +84,18 @@ class ShapeShift:
 
     def open(self):
         self.window.show()
+        try:
+            self.loop.run_until_complete(self.vts_client.connect_websocket())
+            if self.config_json_dict["cached_auth_token"]:
+                self.connect_vts_ws()
 
-        # TODO need to ensure that vts IS available AND somehow awaited that vts_client was able to finish its connect task :thonk_emoji:
-        vts_open = False if self.vts_client.websocket.websocket is None else True
-        vts_open = self.vts_client.connected
-
-        if self.config_json_dict["cached_auth_token"] and vts_open:
-            self.connect_vts_ws()
-
-        on_startup = self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]
-        mdir = self.config_json_dict["plugin_settings"]["model_directory"]
-        if on_startup and mdir and vts_open:
-            self.trigger_watcher()
-
+            on_startup = self.config_json_dict["plugin_settings"]["start_watcher_on_startup"]
+            mdir = self.config_json_dict["plugin_settings"]["model_directory"]
+            if on_startup and mdir:
+                self.trigger_watcher()
+        except Exception as e:
+            print("something went wrong with trying to connect, probably due to VTube Studio not being open")
+            print(e)
         sys.exit(self.app.exec())
 
     def connect_vts_ws(self):
@@ -181,5 +180,5 @@ class ShapeShift:
         self.window.set_watcher_status(self.observer.is_enabled)
 
 if __name__ == "__main__":
-    app = ShapeShift("VTS-Shapeshift/file/plugin_config.json")
+    app = ShapeShift("VTS-Shapeshift/files/plugin_config.json")
     app.open()
