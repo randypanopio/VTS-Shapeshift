@@ -2,7 +2,6 @@ from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtGui import QIcon
 import sys
 from m_utils import links
-# from m_utils import log as logging
 from app_interface.widget import Ui_Form
 
 class Window(QWidget, Ui_Form):

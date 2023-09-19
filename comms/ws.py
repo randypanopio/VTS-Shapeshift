@@ -25,7 +25,7 @@ class WebSocketConnection:
             async with self.lock:
                 await self.websocket.send(message)
         except Exception as e:
-            print(e)
+            logging.ws_logger.error(e)
 
     async def receive(self):
         try:
@@ -34,4 +34,4 @@ class WebSocketConnection:
             async with self.lock:
                 return await self.websocket.recv()
         except Exception as e:
-            print(e)
+            logging.ws_logger.error(e)

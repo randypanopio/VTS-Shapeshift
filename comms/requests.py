@@ -60,11 +60,11 @@ class VT_Requests():
     async def validate_model(self):
         type = "CurrentModelRequest"
         msg = json.dumps(self._standard_payload(type))
-        print("Validating Model Data")
-        print("$$ {} request message:\n{}".format(type, msg))
+        logging.ws_logger.info("Validating Model Data")
+        logging.ws_logger.info("$$ {} request message:\n{}".format(type, msg))
         await self.websocket.send(msg)
         response = await self.websocket.receive()
-        print("$$ {} response:\n{}".format(type, response))
+        logging.ws_logger.info("$$ {} response:\n{}".format(type, response))
 
         if not response:
             return False
@@ -97,23 +97,23 @@ class VT_Requests():
     async def check_status(self):
         type = "APIStateRequest"
         msg = json.dumps(self._standard_payload(type))
-        print("$$ {} request message:\n{}".format(type, msg))
+        logging.ws_logger.info("$$ {} request message:\n{}".format(type, msg))
         await self.websocket.send(msg)
         response = await self.websocket.receive()
         if response:
-            print("$$ {} response:\n{}".format(type, response))
+            logging.ws_logger.info("$$ {} response:\n{}".format(type, response))
             return json.loads(response)
         else:
-            print("Unable to talk to VTS, app likely offline")
+            logging.ws_logger.info("Unable to talk to VTS, app likely offline")
             return
 
     async def _get_auth_token(self):
         type = "AuthenticationTokenRequest"
         msg = json.dumps(self._standard_payload(type))
-        print("$$ {} request message:\n{}".format(type, msg))
+        logging.ws_logger.info("$$ {} request message:\n{}".format(type, msg))
         await self.websocket.send(msg)
         response = await self.websocket.receive()
-        print("$$ {} response:\n{}".format(type, response))
+        logging.ws_logger.info("$$ {} response:\n{}".format(type, response))
 
         if not response:
             return
@@ -123,9 +123,9 @@ class VT_Requests():
             if "authenticationToken" in data:
                 self.auth_token = data["authenticationToken"]
             elif "errorID" in result:
-                print("Error ID: {}, message: {}".format(data["errorID"], data["message"]))
+                logging.ws_logger.error("Error ID: {}, message: {}".format(data["errorID"], data["message"]))
             else:
-                print("Something went terribly wrong during authentication")
+                logging.ws_logger.error("Something went terribly wrong during authentication")
 
     async def authenticate(self):
         status = await self.check_status()
@@ -135,7 +135,7 @@ class VT_Requests():
         if "data" in status:
             if status["data"]["currentSessionAuthenticated"] is True:
                 self.connected = True
-                print("Already Authenticated")
+                logging.ws_logger.info("Already Authenticated")
                 return True
             else:
                 self.connected = False
@@ -146,13 +146,13 @@ class VT_Requests():
         dict_msg = self._standard_payload(type)
         dict_msg["data"].update({"authenticationToken": self.auth_token })
         msg = json.dumps(dict_msg)
-        print("$$ {} request message:\n{}".format(type, msg))
+        logging.ws_logger.info("$$ {} request message:\n{}".format(type, msg))
         await self.websocket.send(msg)
         response = await self.websocket.receive()
-        print("$$ {} response:\n{}".format(type, response))
+        logging.ws_logger.info("$$ {} response:\n{}".format(type, response))
 
         if not response:
-            print("Unnable to authenticate")
+            logging.ws_logger.warning("Unnable to authenticate")
             self.auth_token = ""
             self.connected = False
             return False
@@ -162,7 +162,7 @@ class VT_Requests():
             if data["authenticated"]:
                 self.connected = True
                 return True
-        print("Failed to authenticate")
+        logging.ws_logger.warning("Failed to authenticate")
         self.auth_token = ""
         self.connected = False
         return False
@@ -170,10 +170,10 @@ class VT_Requests():
     async def request_model_data(self):
         type = "CurrentModelRequest"
         msg = json.dumps(self._standard_payload(type))
-        print("$$ {} request message:\n{}".format(type, msg))
+        logging.ws_logger.info("$$ {} request message:\n{}".format(type, msg))
         await self.websocket.send(msg)
         response = await self.websocket.receive()
-        print("$$ {} response:\n{}".format(type, response))
+        logging.ws_logger.info("$$ {} response:\n{}".format(type, response))
 
         if not response:
             return None
@@ -201,10 +201,10 @@ class VT_Requests():
             dict_msg = self._standard_payload(type)
             dict_msg["data"].update({"modelID": self.model_id })
             msg = json.dumps(dict_msg)
-            print("$$ {} request message:\n{}".format(type, msg))
+            logging.ws_logger.info("$$ {} request message:\n{}".format(type, msg))
             await self.websocket.send(msg)
             response = await self.websocket.receive()
-            print("$$ {} response:\n{}".format(type, response))
+            logging.ws_logger.info("$$ {} response:\n{}".format(type, response))
 
             if not response:
                 return
@@ -212,10 +212,10 @@ class VT_Requests():
             if "data" in result:
                 data_dict = result["data"]
                 if "errorID" in data_dict:
-                    print("Error ID: {}, message: {}".format(data_dict["errorID"], data_dict["message"]))
+                    logging.ws_logger.error("Error ID: {}, message: {}".format(data_dict["errorID"], data_dict["message"]))
                     if data_dict["errorID"] == 153 and self.reload_model_on_fail:
                         if self.reload_model_attempts >= 4:
-                            print("Maxed out auto reload model attempts. Something went wrong")
+                            logging.ws_logger.warning("Maxed out auto reload model attempts. Something went wrong")
                         else:
                             # hit 2 second cooldown, wait buffer time before attempting again.
                             await asyncio.sleep(2.5)
@@ -223,7 +223,7 @@ class VT_Requests():
                             await self.reload_current_model()
                 else:
                     self.reload_model_attempts = 0
-                    print("reload model success")
+                    logging.ws_logger.info("reload model success")
     # endregion
 
     # region Events

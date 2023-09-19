@@ -9,12 +9,12 @@ def create_backup(dir):
     if not os.path.exists(backup_dir):
         try:
             shutil.copytree(dir, backup_dir)
-            print("backup created at: " + backup_dir)
+            logging.ws_logger.info("backup created at: " + backup_dir)
         except Exception as e:
-            print("unable to create a backup of: " + dir)
-            print(e)
+            logging.ws_logger.error("unable to create a backup of: " + dir)
+            logging.ws_logger.error(e)
     else:
-        print("removing existing backup at: " + backup_dir + "\ncreating a new backup for this session")
+        logging.ws_logger.info("removing existing backup at: " + backup_dir + "\ncreating a new backup for this session")
         shutil.rmtree(backup_dir)
         create_backup(dir)
     return backup_dir
@@ -29,11 +29,11 @@ def restore_from_backup(backup, to_replace):
     target = Path(to_replace)
 
     if backup == to_replace:
-        print("Passed target and backup as the same path")
+        logging.ws_logger.info("Passed target and backup as the same path")
         return False
 
     if backup in target.parents:
-        print("Backup is contained within the passed target")
+        logging.ws_logger.info("Backup is contained within the passed target")
         # I mean we could handle this but nah
         return False
 
@@ -44,7 +44,7 @@ def restore_from_backup(backup, to_replace):
             os.rename(backup, to_replace)
             return True
         except Exception as e:
-            print(e)
+            logging.ws_logger.error(e)
             return False
     else:
         try:
@@ -53,6 +53,6 @@ def restore_from_backup(backup, to_replace):
             shutil.rmtree(backup)
             return True
         except Exception as e:
-            print(e)
+            logging.ws_logger.error(e)
             return False
     return False

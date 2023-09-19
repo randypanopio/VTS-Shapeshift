@@ -48,10 +48,10 @@ class Watcher(threading.Thread):
         if not self.has_started:
             self.observer.schedule(self.scheduler_event_handler, self.dir, recursive=True)
             self.observer.start()
-            print("enabled {} thread".format(self.observer.name))
+            logging.ws_logger.info("enabled {} thread".format(self.observer.name))
             if not self.thread.is_alive():
                 self.thread.start()
-                print("enabled {} thread".format(self.thread.name))
+                logging.ws_logger.info("enabled {} thread".format(self.thread.name))
             self.has_started = True
 
     def run(self):
@@ -67,40 +67,40 @@ class Watcher(threading.Thread):
             return
         if not self.is_enabled:
             self.is_enabled = True
-            print("Enabled observer, watching: " + self.dir)
+            logging.ws_logger.info("Enabled observer, watching: " + self.dir)
         if not self.has_started:
             self.start_watcher()
 
     def disable_watcher(self):
         if self.is_enabled:
             self.is_enabled = False
-            print("Disabled observer")
+            logging.ws_logger.info("Disabled observer")
 
     def update_directory(self, directory):
         if not self.is_enabled:
             self.dir =  os.path.abspath(directory)
             self.observer.unschedule_all()
             self.observer.schedule(self.scheduler_event_handler, self.dir, recursive=True)
-            print("Directory updated to:", self.dir)
+            logging.ws_logger.info("Directory updated to:", self.dir)
 
     def kill_thread(self):
         if self.observer is not None and self.observer.is_alive():
             self.observer.stop()
             self.observer.join()
-            print("killed watchdog")
+            logging.ws_logger.info("killed watchdog")
         self.should_stop.set()
         if self.thread.is_alive(): self.thread.join()
-        print("killed watcher thread")
+        logging.ws_logger.info("killed watcher thread")
 
     def trigger_event(self, event):
         if self.is_enabled:
             if self.allow_event_trigger:
-                print("correct event")
+                logging.ws_logger.info("correct event")
                 self.event_handler(event)
                 self.allow_event_trigger = False
                 self.start_cooldown()
             else:
-                print("rejected event")
+                logging.ws_logger.info("rejected event")
 
     def start_cooldown(self):
         # technically all the events' thread are cleaned up by the interpreter.

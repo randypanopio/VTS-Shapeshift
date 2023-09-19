@@ -8,6 +8,7 @@ from app_interface.window import Window
 
 class ShapeShift:
     def __init__(self, config_fp):
+        # TODO before release, add a config file generator instead of assuming packaer generates it!!!!!!
         # Threading
         self.loop = asyncio.new_event_loop()
         self.thread = threading.current_thread()
@@ -22,7 +23,7 @@ class ShapeShift:
                     # TODO config file might be an easy way to debug. add a default config generator when the file has been deleted
                     self.config_json_dict = json.loads(file_handler.read())
                 except Exception as e:
-                    print(e)
+                    logging.ws_logger.error(e)
         # Maybe TODO, split out config and only pass necessary data rather than the whole thing, probably won't because while the actual settings might be obfuscated within the code, it should remain relatively small, and generally be used across all the application
 
         # VTS Connection
@@ -80,7 +81,7 @@ class ShapeShift:
                 backup = self.backup_dir,
                 to_replace = self.config_json_dict["plugin_settings"]["model_directory"]
             )
-        print("killed all threads, exiting")
+        logging.ws_logger.info("killed all threads, exiting")
 
     def open(self):
         self.window.show()
@@ -94,8 +95,8 @@ class ShapeShift:
             if on_startup and mdir:
                 self.trigger_watcher()
         except Exception as e:
-            print("something went wrong with trying to connect, probably due to VTube Studio not being open")
-            print(e)
+            logging.ws_logger.error("something went wrong with trying to connect, probably due to VTube Studio not being open")
+            logging.ws_logger.error(e)
         sys.exit(self.app.exec())
 
     def connect_vts_ws(self):
@@ -158,9 +159,9 @@ class ShapeShift:
         with open(self.config_fp, "w") as file_handler:
             try:
                 file_handler.write(json.dumps(self.config_json_dict))
-                print("prefs saved at: " + self.config_fp)
+                logging.ws_logger.info("prefs saved at: " + self.config_fp)
             except Exception as e:
-                    print(e)
+                    logging.ws_logger.error(e)
 
     def process_watcher_update(self, event):
         """
@@ -180,5 +181,6 @@ class ShapeShift:
         self.window.set_watcher_status(self.observer.is_enabled)
 
 if __name__ == "__main__":
+    logging.ws_logger.info("application start")
     app = ShapeShift("VTS-Shapeshift/files/plugin_config.json")
     app.open()
