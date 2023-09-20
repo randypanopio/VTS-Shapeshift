@@ -1,5 +1,5 @@
-import sys, asyncio, os, json, threading, time
-from PySide6 import QtWidgets, QtCore
+import sys, asyncio, os, json, threading, string
+from PySide6 import QtWidgets
 
 from comms import requests
 from watcher import watcher, backups
@@ -7,68 +7,13 @@ from m_utils import log as logging
 from app_interface.window import Window
 
 class ShapeShift:
-    def __init__(self, config_fp):
-        # TODO before release, add a config file generator instead of assuming packaer generates it!!!!!!
-        # Threading
+    def __init__(self):
         self.loop = asyncio.new_event_loop()
         self.thread = threading.current_thread()
         self.thread.name = self.thread.name + " - ShapeShift_Thread"
         asyncio.set_event_loop(self.loop)
-        logging.ws_logger.info("initalizing shapeshift")
 
-        # Plugin Config, used to prepop data
-        # TODO move validation being done in requests here
-        # if config_data["plugin_config"]:
-        #     self.plugin_config = config_data["plugin_config"]
-        # else:
-        #     self.plugin_config = {
-        #         "apiName": "VTubeStudioPublicAPI",
-        #         "apiVersion": "1.0",
-        #         "pluginName": "VTS-Shapeshift",
-        #         "pluginDeveloper": "Roslin - Randy P"}
-
-        # if config_data["cached_auth_token"]:
-        #     self.auth_token = config_data["cached_auth_token"]
-        # else:
-        #     self.auth_token: string = ""
-
-        # if config_data["plugin_settings"]["reload_model_on_fail"]:
-        #     self.reload_model_on_fail = config_data["plugin_settings"]["reload_model_on_fail"]
-        # else:
-        #     self.reload_model_on_fail = False
-
-        # if config_data["plugin_settings"]["update_data_on_new_model"]:
-        #     self.update_data_on_new_model = config_data["plugin_settings"]["update_data_on_new_model"]
-        # else:
-        #     self.update_data_on_new_model = False
-
-        # base = config_data["plugin_settings"]["ws_base_url"]
-        # port = config_data["plugin_settings"]["ws_port"]
-        # if base and port:
-        #     self.url = "{0}{1}{2}".format(base, ":" if not base.endswith(":") else "", port)
-        # else:
-        #     self.url: string = "ws://localhost:8001"
-        ##
-
-        # NOTE split out config and only pass necessary data rather than the whole thing, probably won't because while the actual settings might be obfuscated within the code, it should remain relatively small, and generally be used across all the application
-        self.config_fp = "plugin_config.json"
-        if os.path.isfile(self.config_fp):
-            logging.ws_logger.info("conf file exists")
-            with open(config_fp) as file_handler:
-                logging.ws_logger.info("attempt to open conf file")
-                try:
-                    self.config_json_dict = json.loads(file_handler.read())
-                    logging.ws_logger.info("Existing config file found, populating plugin settings")
-                except Exception as e:
-                    logging.ws_logger.error(e)
-        else:
-            #TODO set file to readonly, and only writeable by this application
-            logging.ws_logger.info("No config file found, creating new config file: "+self.config_fp)
-            file = open(self.config_fp, 'w+')
-            default_config = '{"plugin_config":{"apiName":"VTubeStudioPublicAPI","apiVersion":"1.0","pluginName":"VTS-Shapeshift","pluginDeveloper":"Roslin - Randy P"},"cached_auth_token":"","plugin_settings":{"connect_on_startup":false,"reload_model_on_fail":true,"update_data_on_new_model":true,"backup_folders":true,"restore_files_after_session":false,"start_watcher_on_startup":false,"model_directory":"","ws_base_url":"ws://localhost:","ws_port":"8001","wd_on_create":true,"wd_on_move":true,"wd_on_delete":true}}'
-            file.write(default_config)
-            file.close()
-            self.config_json_dict = json.loads(default_config)
+        self.set_configs()
 
         # VTS Connection
         self.vts_client = requests.VT_Requests(config_data=self.config_json_dict, new_model_handler=self.handle_new_models)
@@ -115,7 +60,6 @@ class ShapeShift:
         self.window.wd_on_create_checkbox.setChecked(self.config_json_dict["plugin_settings"]["wd_on_create"])
         self.window.wd_on_move_checkbox.setChecked(self.config_json_dict["plugin_settings"]["wd_on_move"])
         self.window.wd_on_delete_checkbox.setChecked(self.config_json_dict["plugin_settings"]["wd_on_delete"])
-
 
     def exit_application(self):
         self.save_preferences(save_model_dir=True)
@@ -202,6 +146,59 @@ class ShapeShift:
         self.window.restore_file_checkbox.setEnabled(self.window.backup_checkbox.isChecked())
     # endregion
 
+    def set_configs(self):
+        # Plugin Config, used to prepop data
+        self.config_fp = "plugin_config.json"
+        if os.path.isfile(self.config_fp):
+            with open(self.config_fp, "r") as file_handler:
+                try:
+                    self.config_json_dict = json.loads(file_handler.read())
+                    logging.ws_logger.info("Existing config file found, populating plugin settings")
+                except Exception as e:
+                    logging.ws_logger.error(e)
+        else:
+            #TODO set file to readonly, and only writeable by this application
+            logging.ws_logger.info("No config file found, creating new config file: "+self.config_fp)
+            default_config = '{"plugin_config":{"apiName":"VTubeStudioPublicAPI","apiVersion":"1.0","pluginName":"VTS-Shapeshift","pluginDeveloper":"Roslin - Randy P"},"cached_auth_token":"","plugin_settings":{"connect_on_startup":false,"reload_model_on_fail":true,"update_data_on_new_model":true,"backup_folders":true,"restore_files_after_session":false,"start_watcher_on_startup":false,"model_directory":"","ws_base_url":"ws://localhost:","ws_port":"8001","wd_on_create":true,"wd_on_move":true,"wd_on_delete":true}}'
+            with open(self.config_fp, "w+") as file_handler:
+                try:
+                    file_handler.write(default_config)
+                except Exception as e:
+                    logging.ws_logger.error(e)
+            self.config_json_dict = json.loads(default_config)
+
+        def log_bad_config(additional):
+            logging.ws_logger.warning("Bad config settings! {0} contains bad settings, please delete {1} and restart the application".format(additional, self.config_fp))
+
+        # Validate configs, set defaults
+        if "plugin_config" not in self.config_json_dict:
+            log_bad_config("plugin_config")
+            self.config_json_dict["plugin_config"] = {
+                "apiName": "VTubeStudioPublicAPI",
+                "apiVersion": "1.0",
+                "pluginName": "VTS-Shapeshift",
+                "pluginDeveloper": "Roslin - Randy P"}
+
+        if "cached_auth_token" not in self.config_json_dict:
+            self.config_json_dict["cached_auth_token"]: string = ""
+
+        if "plugin_settings" not in self.config_json_dict:
+            log_bad_config("plugin_settings")
+            self.config_json_dict["plugin_settings"] = {
+                "connect_on_startup": True,
+                "reload_model_on_fail": True,
+                "update_data_on_new_model": True,
+                "backup_folders": True,
+                "restore_files_after_session": False,
+                "start_watcher_on_startup": False,
+                "model_directory": "",
+                "ws_base_url": "ws://localhost:",
+                "ws_port" : "8001",
+                "wd_on_create" : True,
+                "wd_on_move" : True,
+                "wd_on_delete" : True
+            }
+
     def save_prefs_tofile(self):
         with open(self.config_fp, "w") as file_handler:
             try:
@@ -228,5 +225,5 @@ class ShapeShift:
         logging.ws_logger.info("New model detected!")
 
 if __name__ == "__main__":
-    app = ShapeShift("VTS-Shapeshift/files/plugin_config.json")
+    app = ShapeShift()
     app.open()

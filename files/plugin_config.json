@@ -1,1 +1,23 @@
-{"plugin_config": {"apiName": "VTubeStudioPublicAPI", "apiVersion": "1.0", "pluginName": "VTS-Shapeshift", "pluginDeveloper": "Roslin - Randy P"}, "cached_auth_token": "", "plugin_settings": {"connect_on_startup": false, "reload_model_on_fail": true, "update_data_on_new_model": true, "backup_folders": true, "restore_files_after_session": false, "start_watcher_on_startup": false, "model_directory": "", "ws_base_url": "ws://localhost:", "ws_port": "8001", "wd_on_create": true, "wd_on_move": true, "wd_on_delete": true}}
+{
+    "plugin_config": {
+        "apiName": "VTubeStudioPublicAPI",
+        "apiVersion": "1.0",
+        "pluginName": "VTS-Shapeshift",
+        "pluginDeveloper": "Roslin - Randy P"
+    },
+    "cached_auth_token": "",
+    "plugin_settings": {
+        "connect_on_startup": true,
+        "reload_model_on_fail": true,
+        "update_data_on_new_model": true,
+        "backup_folders": true,
+        "restore_files_after_session": false,
+        "start_watcher_on_startup": false,
+        "model_directory": "",
+        "ws_base_url": "ws://localhost:",
+        "ws_port" : "8001",
+        "wd_on_create" : true,
+        "wd_on_move" : true,
+        "wd_on_delete" : true
+    }
+}

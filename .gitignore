@@ -3,6 +3,8 @@ test/
 testpy/
 debug/
 
+*.psd
+
 *__pycache__/
 *.pyc
 *.log

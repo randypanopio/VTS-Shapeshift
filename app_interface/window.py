@@ -16,7 +16,7 @@ class Window(QWidget, Ui_Form):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle("VTS-Shapeshift Plugin Application")
-        self.setWindowIcon(QIcon("VTS-Shapeshift/files/images/icon.png"))
+        self.setWindowIcon(QIcon("files/images/icon.ico"))
         self.twitter_button.clicked.connect(self.twitter_link)
         self.github_button.clicked.connect(self.github_link)
         self.watcher_secondary_label.setText("")
