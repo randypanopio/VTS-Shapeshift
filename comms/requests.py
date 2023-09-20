@@ -2,7 +2,6 @@ import json, secrets, string, asyncio, threading
 from m_utils import log as logging
 from comms import ws as websocket
 
-# TODO convert logging
 class VT_Requests():
     def __init__(self, config_data, new_model_handler = None):
         self.model_id: string = ""
@@ -16,42 +15,20 @@ class VT_Requests():
         self.thread.name = self.thread.name + " - VT_Requests_Thread"
 
         # Prefil from config
-        if config_data["plugin_config"]:
-            self.plugin_config = config_data["plugin_config"]
-        else:
-            self.plugin_config = {
-                "apiName": "VTubeStudioPublicAPI",
-                "apiVersion": "1.0",
-                "pluginName": "VTS-Shapeshift",
-                "pluginDeveloper": "Roslin - Randy P"}
-
-        if config_data["cached_auth_token"]:
-            self.auth_token = config_data["cached_auth_token"]
-        else:
-            self.auth_token: string = ""
-
-        if config_data["plugin_settings"]["reload_model_on_fail"]:
-            self.reload_model_on_fail = config_data["plugin_settings"]["reload_model_on_fail"]
-        else:
-            self.reload_model_on_fail = False
-
-        if config_data["plugin_settings"]["update_data_on_new_model"]:
-            self.update_data_on_new_model = config_data["plugin_settings"]["update_data_on_new_model"]
-        else:
-            self.update_data_on_new_model = False
-
+        self.plugin_config = config_data["plugin_config"]
+        self.auth_token = config_data["cached_auth_token"]
+        self.reload_model_on_fail = config_data["plugin_settings"]["reload_model_on_fail"]
+        self.update_data_on_new_model = config_data["plugin_settings"]["update_data_on_new_model"]
         base = config_data["plugin_settings"]["ws_base_url"]
         port = config_data["plugin_settings"]["ws_port"]
-        if base and port:
-            self.url = "{0}{1}{2}".format(base, ":" if not base.endswith(":") else "", port)
-        else:
-            self.url: string = "ws://localhost:8001"
+        self.url = "{0}{1}{2}".format(base, ":" if not base.endswith(":") else "", port)
 
         # Create and set up a new event loop
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 
     async def connect_websocket(self):
+        logging.ws_logger.info("creating websocket connection")
         self.websocket = websocket.WebSocketConnection(self.url)
         self.loop.create_task(self.websocket.connect())
 

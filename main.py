@@ -14,17 +14,61 @@ class ShapeShift:
         self.thread = threading.current_thread()
         self.thread.name = self.thread.name + " - ShapeShift_Thread"
         asyncio.set_event_loop(self.loop)
+        logging.ws_logger.info("initalizing shapeshift")
 
         # Plugin Config, used to prepop data
-        self.config_fp = config_fp
+        # TODO move validation being done in requests here
+        # if config_data["plugin_config"]:
+        #     self.plugin_config = config_data["plugin_config"]
+        # else:
+        #     self.plugin_config = {
+        #         "apiName": "VTubeStudioPublicAPI",
+        #         "apiVersion": "1.0",
+        #         "pluginName": "VTS-Shapeshift",
+        #         "pluginDeveloper": "Roslin - Randy P"}
+
+        # if config_data["cached_auth_token"]:
+        #     self.auth_token = config_data["cached_auth_token"]
+        # else:
+        #     self.auth_token: string = ""
+
+        # if config_data["plugin_settings"]["reload_model_on_fail"]:
+        #     self.reload_model_on_fail = config_data["plugin_settings"]["reload_model_on_fail"]
+        # else:
+        #     self.reload_model_on_fail = False
+
+        # if config_data["plugin_settings"]["update_data_on_new_model"]:
+        #     self.update_data_on_new_model = config_data["plugin_settings"]["update_data_on_new_model"]
+        # else:
+        #     self.update_data_on_new_model = False
+
+        # base = config_data["plugin_settings"]["ws_base_url"]
+        # port = config_data["plugin_settings"]["ws_port"]
+        # if base and port:
+        #     self.url = "{0}{1}{2}".format(base, ":" if not base.endswith(":") else "", port)
+        # else:
+        #     self.url: string = "ws://localhost:8001"
+        ##
+
+        # NOTE split out config and only pass necessary data rather than the whole thing, probably won't because while the actual settings might be obfuscated within the code, it should remain relatively small, and generally be used across all the application
+        self.config_fp = "plugin_config.json"
         if os.path.isfile(self.config_fp):
+            logging.ws_logger.info("conf file exists")
             with open(config_fp) as file_handler:
+                logging.ws_logger.info("attempt to open conf file")
                 try:
-                    # TODO config file might be an easy way to debug. add a default config generator when the file has been deleted
                     self.config_json_dict = json.loads(file_handler.read())
+                    logging.ws_logger.info("Existing config file found, populating plugin settings")
                 except Exception as e:
                     logging.ws_logger.error(e)
-        # Maybe TODO, split out config and only pass necessary data rather than the whole thing, probably won't because while the actual settings might be obfuscated within the code, it should remain relatively small, and generally be used across all the application
+        else:
+            #TODO set file to readonly, and only writeable by this application
+            logging.ws_logger.info("No config file found, creating new config file: "+self.config_fp)
+            file = open(self.config_fp, 'w+')
+            default_config = '{"plugin_config":{"apiName":"VTubeStudioPublicAPI","apiVersion":"1.0","pluginName":"VTS-Shapeshift","pluginDeveloper":"Roslin - Randy P"},"cached_auth_token":"","plugin_settings":{"connect_on_startup":false,"reload_model_on_fail":true,"update_data_on_new_model":true,"backup_folders":true,"restore_files_after_session":false,"start_watcher_on_startup":false,"model_directory":"","ws_base_url":"ws://localhost:","ws_port":"8001","wd_on_create":true,"wd_on_move":true,"wd_on_delete":true}}'
+            file.write(default_config)
+            file.close()
+            self.config_json_dict = json.loads(default_config)
 
         # VTS Connection
         self.vts_client = requests.VT_Requests(config_data=self.config_json_dict, new_model_handler=self.handle_new_models)
@@ -100,10 +144,14 @@ class ShapeShift:
         sys.exit(self.app.exec())
 
     def connect_vts_ws(self):
+        logging.ws_logger.info("Attempting to connect vts websocket")
         result = self.loop.run_until_complete(self.vts_client.authenticate())
         if result:
             self.config_json_dict["cached_auth_token"] = self.vts_client.auth_token
             self.save_prefs_tofile()
+            logging.ws_logger.info("Saved Auth cache token")
+        else:
+            logging.ws_logger.info("Failed to connect vts websocket")
         self.window.set_plugin_status(result)
 
     def trigger_watcher(self):
@@ -130,7 +178,6 @@ class ShapeShift:
             self.observer.update_directory(dir_path)
             self.window.watcher_secondary_label.setText("")
             # Assume that setting a new model path is basically a new session, so its safe to do a fresh backup?
-            # TODO debilitate this lol
             if self.config_json_dict["plugin_settings"]["backup_folders"]:
                 backups.create_backup(dir_path)
             self.save_prefs_tofile()
@@ -161,11 +208,10 @@ class ShapeShift:
                 file_handler.write(json.dumps(self.config_json_dict))
                 logging.ws_logger.info("prefs saved at: " + self.config_fp)
             except Exception as e:
-                    logging.ws_logger.error(e)
+                logging.ws_logger.error(e)
 
     def process_watcher_update(self, event):
         """
-        TODO
         job is to detect new changes from watcher.
         - validate requests and send to ws requests
             - check if vts connection is still valid, reconnect plugin if thats not the case
@@ -179,8 +225,8 @@ class ShapeShift:
         self.window.watcher_secondary_label.setText("new model detected!")
         self.observer.disable_watcher()
         self.window.set_watcher_status(self.observer.is_enabled)
+        logging.ws_logger.info("New model detected!")
 
 if __name__ == "__main__":
-    logging.ws_logger.info("application start")
     app = ShapeShift("VTS-Shapeshift/files/plugin_config.json")
     app.open()
