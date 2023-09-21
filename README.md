@@ -10,6 +10,7 @@ Can also be extended to hook to external processes and plugins to trigger live m
 
 ## 1. About <a name="about"></a>
 VTS-Shapeshift is a lightweight python application/plugin that uses a “watcher” to keep track of file changes of the currently loaded VTube Studio model. This can be then used to send automatic updates to Vtube Studio to update the current model. Get rid of annoying macros, or even extend it with other streaming integration applications for more unique stream interactions!
+
 Check out a quick start and preview of it in-action [here!](https://youtu.be/hMnjTp1Ll6M)
 
 ## 2. Installation <a name="install"></a>
